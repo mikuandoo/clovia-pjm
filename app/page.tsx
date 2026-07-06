@@ -1716,20 +1716,33 @@ function Overview({
   assets: Asset[];
   onOpenAsset: (assetId: string, tab: "req" | "check") => void;
 }) {
+  const [view, setView] = useState<"list" | "gallery">("list");
+
   return (
     <div className="overview-layout">
-      {/* 画像一覧（作業の主役・枠なし） */}
+      {/* 画像（一覧 / プレビュー 切替・枠なし） */}
       <section className="asset-list-panel">
         <div className="section-title-row">
-          <div>
-            <h3>画像一覧</h3>
+          <div className="seg compact">
+            <button className={view === "list" ? "on" : ""} type="button" onClick={() => setView("list")}>
+              一覧
+            </button>
+            <button
+              className={view === "gallery" ? "on" : ""}
+              type="button"
+              onClick={() => setView("gallery")}
+            >
+              プレビュー
+            </button>
           </div>
           <div className="section-title-actions">
+            <button className="button ghost sm">⬇ 一括ダウンロード</button>
             <button className="button primary sm">＋ 画像を追加</button>
           </div>
         </div>
 
-        <div className="asset-table-wrap">
+        {view === "list" && (
+          <div className="asset-table-wrap">
           <table className="asset-table">
             <colgroup>
               <col className="col-id" />
@@ -1852,19 +1865,11 @@ function Overview({
               ))}
             </tbody>
           </table>
-        </div>
-      </section>
-
-      {/* 5. 画像プレビュー */}
-      <section className="sub-panel">
-        <div className="section-title-row">
-          <div>
-            <h3>画像プレビュー</h3>
           </div>
-          <button className="button ghost sm">⬇ 一括ダウンロード</button>
-        </div>
+        )}
 
-        <div className="asset-preview-grid">
+        {view === "gallery" && (
+          <div className="asset-preview-grid">
           {assets.map((asset, index) => (
             <button className="asset-preview-card" key={asset.id} onClick={() => onOpenAsset(asset.id, "req")}>
               <div className="asset-preview-thumb">
@@ -1876,7 +1881,8 @@ function Overview({
               <small>{asset.status}</small>
             </button>
           ))}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   );
