@@ -3,9 +3,9 @@
   --bg: #f8fafc;
   --card: #ffffff;
   --line: #e5e7eb;
-  --lav: #2563eb;
-  --lav-d: #1d4ed8;
-  --lav-soft: #eff6ff;
+  --lav: #1f2937;
+  --lav-d: #111827;
+  --lav-soft: #f3f4f6;
   --lav-soft2: #f3f4f6;
   --pink: #dc2626;
   --pink-soft: #fee2e2;
@@ -93,6 +93,31 @@ button {
   background: var(--lav-d);
 }
 
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 12px;
+}
+
+.main-nav button {
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.16s ease;
+}
+
+.main-nav button:hover {
+  color: var(--ink);
+}
+
+.main-nav button.on {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .head {
   display: flex;
   align-items: flex-start;
@@ -117,7 +142,33 @@ button {
 }
 
 .project-head {
-  align-items: flex-end;
+  display: block;
+}
+
+.project-head .back-button {
+  margin-bottom: 18px;
+}
+
+h1.project-title {
+  font-size: 24px;
+}
+
+.project-head .summary-bar {
+  margin-top: 14px;
+}
+
+.project-head-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .scope-row {
@@ -612,6 +663,7 @@ button {
 
 .overview-layout {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -671,6 +723,1303 @@ button {
   font-size: 13px;
   font-weight: 650;
   line-height: 1.8;
+}
+
+/* --- 概要: サマリーバー --- */
+.summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 0;
+}
+
+.summary-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.summary-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.summary-progress .progress {
+  flex: 1;
+}
+
+.summary-progress strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.summary-progress small {
+  color: var(--lav-d);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* --- 概要: 2カラム（説明 / メタ） --- */
+.overview-columns {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+}
+
+.overview-desc {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+}
+
+.overview-desc h4,
+.overview-deliverables h4,
+.overview-schedule h4 {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.overview-desc p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.8;
+}
+
+.overview-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+
+.overview-deliverables .chips {
+  margin-top: 0;
+}
+
+/* --- 概要: スケジュール ステップ --- */
+.schedule-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedule-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 132px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.schedule-index {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--lav-soft);
+  color: var(--lav-d);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.schedule-steps strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.schedule-steps small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* --- リソース --- */
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.resource-col h4 {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.resource-list {
+  display: grid;
+  gap: 8px;
+}
+
+.resource-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  text-align: left;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.resource-item:hover {
+  border-color: var(--lav);
+  background: var(--lav-soft2);
+}
+
+.resource-icon {
+  font-size: 16px;
+  text-align: center;
+}
+
+.resource-tag {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--lav-soft2);
+  color: var(--muted);
+  padding: 4px 0;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.resource-item p {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-item em {
+  color: var(--lav-d);
+  font-size: 11px;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.resource-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* --- モデル登録 --- */
+.model-gender-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.model-gender-label {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.model-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.model-card {
+  position: relative;
+  width: 128px;
+  height: 168px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.model-card-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.model-card-remove:hover {
+  opacity: 0.85;
+}
+
+.model-add-btn {
+  width: fit-content;
+}
+
+/* --- 画像一覧（主役・枠なし） --- */
+.section-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.asset-thumb-sm {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--lav-soft2);
+}
+
+.asset-list-panel {
+  min-width: 0;
+}
+
+/* 情報密度を上げて横スクロールなしで収める */
+.asset-list-panel .asset-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.asset-list-panel .asset-table th,
+.asset-list-panel .asset-table td {
+  padding: 6px 7px;
+  font-size: 11px;
+  white-space: normal;
+  vertical-align: middle;
+}
+
+.asset-list-panel .asset-table th {
+  font-size: 10px;
+}
+
+.asset-list-panel .cell-title-input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 7px;
+  font-size: 12px;
+}
+
+.asset-list-panel .asset-table .cell-date,
+.asset-list-panel .asset-table select {
+  width: 100%;
+  padding: 4px 5px;
+  font-size: 11px;
+}
+
+.asset-list-panel .spec-selects {
+  min-width: 0;
+  gap: 4px;
+}
+
+.asset-list-panel .assignee-selects {
+  gap: 6px;
+}
+
+.asset-list-panel .assignee-row {
+  display: grid;
+  gap: 1px;
+}
+
+.asset-list-panel .assignee-row > span {
+  width: auto;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.asset-list-panel .progress-actions {
+  gap: 4px;
+}
+
+.asset-list-panel .progress-actions .button.sm {
+  min-height: 26px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+.asset-list-panel .row-ops {
+  gap: 4px;
+}
+
+.asset-list-panel .row-ops button {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+
+/* テーブル内はレギュラーウェイト */
+.asset-list-panel .asset-table th,
+.asset-list-panel .asset-table td,
+.asset-list-panel .cell-title-input,
+.asset-list-panel .asset-table .cell-date,
+.asset-list-panel .asset-table select,
+.asset-list-panel .assignee-row > span,
+.asset-list-panel .progress-actions .button.sm {
+  font-weight: 400;
+}
+
+.asset-list-panel col.col-id {
+  width: 32px;
+}
+
+.asset-list-panel col.col-title {
+  width: 15%;
+}
+
+.asset-list-panel col.col-date {
+  width: 10%;
+}
+
+.asset-list-panel col.col-assignee {
+  width: 15%;
+}
+
+.asset-list-panel col.col-spec {
+  width: 11%;
+}
+
+.asset-list-panel col.col-status {
+  width: 64px;
+}
+
+.asset-list-panel col.col-progress {
+  width: 92px;
+}
+
+.asset-list-panel col.col-ops {
+  width: 62px;
+}
+
+.asset-title-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.asset-table .cell-date,
+.asset-table select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.asset-table .cell-date:focus,
+.asset-table select:focus {
+  border-color: var(--lav);
+}
+
+.cell-title-input {
+  min-width: 180px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  outline: none;
+}
+
+.cell-title-input:focus {
+  border-color: var(--lav);
+}
+
+.assignee-selects {
+  display: grid;
+  gap: 6px;
+}
+
+.assignee-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assignee-row > span {
+  width: 28px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.spec-selects {
+  display: grid;
+  gap: 6px;
+  min-width: 128px;
+}
+
+.progress-actions {
+  display: grid;
+  gap: 6px;
+  width: max-content;
+}
+
+.row-ops {
+  display: flex;
+  gap: 6px;
+}
+
+.row-ops button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.row-ops button:hover {
+  border-color: var(--lav);
+  color: var(--lav-d);
+}
+
+/* --- 折りたたみセクション --- */
+.collapsible-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.collapsible-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.collapsible-title h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.collapsible-hint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.collapsible-chevron {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+  transition: transform 0.16s ease;
+}
+
+.collapsible-chevron.open {
+  transform: rotate(180deg);
+}
+
+.collapsible-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.collapsible-body .resource-grid,
+.collapsible-body .model-gender-grid {
+  margin-top: 0;
+}
+
+/* --- サイドシート --- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: transparent;
+}
+
+.side-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  height: 100%;
+  background: #fff;
+  box-shadow: -10px 0 40px rgba(17, 24, 39, 0.18);
+  animation: sheetIn 0.22s ease;
+}
+
+.sheet-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.sheet-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.sheet-body {
+  display: grid;
+  gap: 22px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.sheet-section > h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+@keyframes sheetIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* --- 要件指定 / チェック モーダル --- */
+.asset-modal-backdrop {
+  place-items: center;
+  padding: 24px;
+}
+
+.asset-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100%);
+  max-height: calc(100vh - 48px);
+  border-radius: 18px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.asset-modal-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.asset-modal-tabs {
+  display: flex;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.asset-modal-tabs button {
+  border-radius: 9px;
+  padding: 8px 16px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.asset-modal-tabs button.on {
+  background: var(--lav-soft);
+  color: var(--lav-d);
+}
+
+.asset-modal-head-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.asset-modal-kicker {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.asset-modal-title {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.asset-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.stage-head {
+  margin-bottom: 16px;
+}
+
+.stage-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.stage-num {
+  color: var(--pink);
+}
+
+.stage-head p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.modal-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+  outline: none;
+  resize: vertical;
+}
+
+.modal-input:focus {
+  border-color: var(--lav);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
+}
+
+/* オリエン */
+.orient-card {
+  border-left: 4px solid var(--lav-d);
+}
+
+.orient-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.orient-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.orient-title h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.orient-body {
+  margin-top: 16px;
+}
+
+.tag-pink {
+  border-radius: 999px;
+  background: var(--pink-soft);
+  color: var(--pink);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.tag-pink.solid {
+  width: fit-content;
+  background: var(--pink);
+  color: #fff;
+}
+
+.spec-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.spec-chip {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--lav-soft2);
+  padding: 8px 14px;
+}
+
+.spec-chip span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.spec-chip b {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.spec-note {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 要件アイテム */
+.req-items-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.req-items-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.req-items-title h3,
+.req-items-title h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.muted-inline {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.req-items-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.model-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.count-seg {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 3px;
+}
+
+.count-seg button {
+  min-width: 30px;
+  border-radius: 7px;
+  padding: 5px 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.count-seg button.on {
+  background: var(--lav-d);
+  color: #fff;
+}
+
+.req-item {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+}
+
+.req-item-client {
+  border-color: var(--pink);
+  background: linear-gradient(180deg, #fff 40%, var(--pink-soft) 200%);
+}
+
+.req-item-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.req-item-body {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+/* 要件指定 2ペイン */
+.req-2pane {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.orient-pane {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 18px;
+}
+
+.req-pane {
+  display: grid;
+  gap: 14px;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pane-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.pane-head h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.pane-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.orient-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.8;
+}
+
+.orient-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ref-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--lav-soft2);
+  color: var(--ink);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.req-uploads {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.upload-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 108px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.slot-x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.slot-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  border-radius: 6px;
+  background: var(--dark);
+  color: #fff;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.slot-num {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.slot-add,
+.slot-add-dashed {
+  display: grid;
+  place-items: center;
+  height: 108px;
+  color: var(--muted);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.slot-add {
+  width: 40px;
+}
+
+.slot-add-dashed {
+  width: auto;
+  height: 44px;
+  border: 1px dashed var(--lav);
+  border-radius: 999px;
+  padding: 0 16px;
+  color: var(--lav-d);
+  font-size: 13px;
+}
+
+.model-pill {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.req-comment {
+  width: 100%;
+  min-height: 108px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+}
+
+.req-comment:focus {
+  border-color: var(--lav);
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* チェック */
+.check-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.check-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 150px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.check-step.on {
+  border-color: var(--lav-d);
+  box-shadow: 0 0 0 1px var(--lav-d);
+}
+
+.step-dot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--lav-soft2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.check-step.on .step-dot {
+  background: var(--lav-d);
+  color: #fff;
+}
+
+.check-step.done .step-dot {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.step-label {
+  display: grid;
+  gap: 2px;
+}
+
+.step-label b {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.step-label small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.check-phase-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  border-radius: 12px;
+  background: var(--lav-soft);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.check-phase-bar strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.check-phase-bar span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.check-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.check-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 360px;
+}
+
+.check-drop {
+  flex: 1;
+  min-height: 120px;
+}
+
+.check-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.check-notify {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.judge-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.judge-seg {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--lav-soft2);
+  padding: 4px;
+}
+
+.judge-seg button {
+  border-radius: 7px;
+  padding: 8px 18px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.judge-seg button.on {
+  background: var(--lav-d);
+  color: #fff;
+}
+
+.judge-status {
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.check-col-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
+/* モーダル内はレギュラーウェイトに統一 */
+.asset-modal .field-label,
+.asset-modal .asset-modal-kicker,
+.asset-modal .asset-modal-title,
+.asset-modal .muted-inline,
+.asset-modal .spec-note,
+.asset-modal .spec-chip span,
+.asset-modal .spec-chip b,
+.asset-modal .orient-text,
+.asset-modal .ref-chip,
+.asset-modal .pane-note,
+.asset-modal .model-count,
+.asset-modal .req-item-label,
+.asset-modal .req-comment,
+.asset-modal .modal-input,
+.asset-modal .check-note,
+.asset-modal .check-phase-bar span,
+.asset-modal .step-label small,
+.asset-modal .stage-head p {
+  font-weight: 400;
+}
+
+.asset-modal .stage-head h2,
+.asset-modal .pane-head h3,
+.asset-modal .pane-head h4,
+.asset-modal .req-items-title h3,
+.asset-modal .req-items-title h4,
+.asset-modal .check-phase-bar strong,
+.asset-modal .step-label b {
+  font-weight: 600;
 }
 
 .muted-pill {
@@ -893,11 +2242,11 @@ button {
   border-bottom: 0;
 }
 
-.asset-table td:nth-child(2) {
+.overview-layout .asset-table td:nth-child(2) {
   min-width: 190px;
 }
 
-.asset-table td:nth-child(5) {
+.overview-layout .asset-table td:nth-child(5) {
   min-width: 180px;
 }
 
@@ -910,6 +2259,55 @@ button {
 
 .asset-table button:hover {
   color: var(--lav-d);
+}
+
+.asset-table tr.clickable-row {
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.asset-table tr.clickable-row:hover td {
+  background: var(--lav-soft2);
+}
+
+.asset-table td.row-title {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.asset-table tr.clickable-row:hover td.row-title {
+  color: var(--lav-d);
+}
+
+.table-progress {
+  display: grid;
+  grid-template-columns: 90px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-progress small {
+  color: var(--lav-d);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.member-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-add-row select,
+.member-add-row input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: #fff;
 }
 
 .asset-preview-grid {
@@ -1229,6 +2627,11 @@ button {
   color: var(--muted);
 }
 
+.tone-red {
+  background: var(--pink-soft);
+  color: var(--pink);
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1384,7 +2787,7 @@ button {
 
 .member-add input:focus {
   border-color: var(--lav);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
 }
 
 .member-add .button {
@@ -1442,7 +2845,98 @@ button {
 
 .form-field input:focus {
   border-color: var(--lav);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
+}
+
+.form-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--control-radius);
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  outline: none;
+  resize: vertical;
+}
+
+.form-field textarea:focus {
+  border-color: var(--lav);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
+}
+
+/* --- プロジェクト概要フォーム --- */
+.overview-form {
+  display: grid;
+  gap: 14px;
+}
+
+.overview-form-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.overview-form-left {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.overview-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.overview-upload-head span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.overview-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.overview-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.overview-file-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--lav-d);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-file-clip {
+  flex: 0 0 auto;
+}
+
+.overview-file > button {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.overview-file > button:hover {
+  color: var(--pink);
 }
 
 .form-segment {
@@ -1559,6 +3053,10 @@ button {
   .overview-layout,
   .overview-grid,
   .overview-text-grid,
+  .overview-columns,
+  .overview-form-top,
+  .resource-grid,
+  .model-gender-grid,
   .asset-layout {
     grid-template-columns: 1fr;
   }
@@ -1578,6 +3076,13 @@ button {
   .detail-hero,
   .overview-grid,
   .overview-text-grid,
+  .overview-columns,
+  .overview-meta,
+  .overview-form-top,
+  .resource-grid,
+  .model-gender-grid,
+  .req-2pane,
+  .check-cols,
   .project-brief-grid,
   .model-grid,
   .preview-grid,
@@ -1591,6 +3096,10 @@ button {
 
   .head {
     display: grid;
+  }
+
+  .orient-pane {
+    position: static;
   }
 
   .top-actions,

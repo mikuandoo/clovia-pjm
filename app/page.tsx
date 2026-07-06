@@ -7,7 +7,7 @@ type AssetStatus = "未着手" | "要件確定" | "生成確認" | "レタッチ
 type TabKey = "overview" | "direction" | "review";
 type MemberRole = "ディレクター" | "デザイナー（生成）" | "レタッチャー" | "CS担当";
 type ProjectFilter = "all" | "active" | "done";
-type AppView = "production" | "project";
+type AppView = "production" | "project" | "members";
 type ViewerMode = "internal" | "client";
 
 type RouteState = {
@@ -26,6 +26,7 @@ type Project = {
   contact: string;
   status: ProjectStatus;
   risk: "低" | "中" | "高";
+  priority: "低" | "中" | "高";
   period: string;
   volume: number;
   done: number;
@@ -75,18 +76,6 @@ type ProjectDraft = {
   selectedMembers: string[];
 };
 
-type ActionItem = {
-  id: string;
-  projectId: string;
-  assetId?: string;
-  title: string;
-  context: string;
-  owner: string;
-  due: string;
-  tone: "danger" | "warning" | "normal";
-  tab: TabKey;
-};
-
 const initialProjectDraft: ProjectDraft = {
   name: "",
   client: "",
@@ -107,6 +96,7 @@ const initialProjects: Project[] = [
     contact: "川村 様（MD部）",
     status: "生成中",
     risk: "中",
+    priority: "低",
     period: "4/15 - 5/30",
     volume: 10,
     done: 3,
@@ -125,6 +115,7 @@ const initialProjects: Project[] = [
     contact: "小林 様",
     status: "確認中",
     risk: "低",
+    priority: "中",
     period: "3/20 - 4/25",
     volume: 6,
     done: 5,
@@ -142,6 +133,7 @@ const initialProjects: Project[] = [
     contact: "小林 様",
     status: "要件整理",
     risk: "高",
+    priority: "高",
     period: "5/10 - 7/05",
     volume: 14,
     done: 2,
@@ -159,6 +151,7 @@ const initialProjects: Project[] = [
     contact: "佐々木 様",
     status: "納品済",
     risk: "低",
+    priority: "低",
     period: "2/10 - 3/15",
     volume: 12,
     done: 12,
@@ -172,81 +165,34 @@ const initialProjects: Project[] = [
 ];
 
 const initialAssets: Asset[] = [
-  {
-    id: "a1",
+  ...(
+    [
+      { title: "メインビジュアル（縦）", due: "4/24", status: "納品OK", progress: 100 },
+      { title: "メインビジュアル（横）", due: "4/24", status: "未着手", progress: 0 },
+      { title: "コーディネート全身", due: "4/26", status: "未着手", progress: 0 },
+      { title: "商品アップ（トップス）", due: "4/26", status: "未着手", progress: 0 },
+      { title: "商品アップ（ボトムス）", due: "4/28", status: "未着手", progress: 0 },
+      { title: "着用シーン（屋外）", due: "4/30", status: "未着手", progress: 0 },
+      { title: "着用シーン（室内）", due: "4/30", status: "未着手", progress: 0 },
+      { title: "バナー（正方形）", due: "5/02", status: "未着手", progress: 0 },
+      { title: "ストーリー（縦）", due: "5/05", status: "未着手", progress: 0 },
+      { title: "ディテール（小物）", due: "5/08", status: "未着手", progress: 0 }
+    ] as { title: string; due: string; status: AssetStatus; progress: number }[]
+  ).map((item, index) => ({
+    id: `a${index + 1}`,
     projectId: "p1",
-    title: "メインビジュアル（縦）",
+    title: item.title,
     format: "2000×2500 / JPG / 350dpi",
-    due: "4/24",
+    due: item.due,
     owner: "佐藤 美咲",
-    status: "生成確認",
-    progress: 64,
-    concept:
-      "休日の朝の外出シーン。20代後半モデル、ナチュラルメイク、屋外の並木道、自然光。上下に余白を確保してバナー転用可能にする。",
-    must: ["トップスの素材感が分かる", "全身が無理なく収まる", "春らしい自然光", "コピー用の余白を確保"],
-    ng: ["暗い背景", "過度な肌補正", "商品色が変わる加工", "モデルの表情が作り込みすぎ"],
-    references: ["昨季KV_縦.jpg", "並木道_自然光.png", "モデル表情参考.pdf"],
-    comments: [
-      {
-        from: "川村 様",
-        role: "クライアント",
-        body: "1案目は少しEC感が強いので、もう少しブランド広告寄りにしたいです。",
-        time: "今日 10:24"
-      },
-      {
-        from: "前田 涼",
-        role: "ディレクター",
-        body: "背景を整理しつつ、トップスの質感は残す方向で再生成します。",
-        time: "今日 10:42"
-      }
-    ]
-  },
-  {
-    id: "a2",
-    projectId: "p1",
-    title: "メインビジュアル（横）",
-    format: "2400×1350 / JPG / 350dpi",
-    due: "4/24",
-    owner: "佐藤 美咲",
-    status: "要件確定",
-    progress: 42,
-    concept:
-      "横位置バナー。左に被写体、右にコピー余白。屋外・自然光で爽やかに、視線は画面外へ向ける。",
-    must: ["左に被写体", "右側に余白", "スマホ表示でも商品が認識できる"],
-    ng: ["中央配置", "背景が情報過多", "コピー領域への被り"],
-    references: ["横バナー構図.jpg", "SS広告参考.png"],
-    comments: [
-      {
-        from: "今井 彩",
-        role: "顧客窓口",
-        body: "クライアント確認済み。コピー領域だけ広めに確保してください。",
-        time: "昨日 16:10"
-      }
-    ]
-  },
-  {
-    id: "a3",
-    projectId: "p1",
-    title: "商品アップ（トップス）",
-    format: "1500×1875 / PNG / 300dpi",
-    due: "4/26",
-    owner: "高橋 健",
-    status: "レタッチ中",
-    progress: 78,
-    concept:
-      "トップスの素材と縫製ディテールが伝わる上半身寄り。白飛びを避け、生地の色味を正確に出す。",
-    must: ["生地の凹凸", "襟元の縫製", "正確な色味", "清潔感"],
-    ng: ["白飛び", "過度なコントラスト", "首元の不自然な補正"],
-    references: ["素材寄り参考.jpg", "商品単体画像.png"],
-    comments: [
-      {
-        from: "森 さやか",
-        role: "レタッチ",
-        body: "袖口の歪みを修正中。色味は商品画像に合わせます。",
-        time: "今日 09:12"
-      }
-    ]
-  },
+    status: item.status,
+    progress: item.progress,
+    concept: "2026春夏ルックブック用カット。ブランドトーンに沿って自然光で撮影する。",
+    must: ["ブランドトーンに合わせる", "商品の素材感が分かる", "用途に合わせた余白を確保"],
+    ng: ["過度な加工", "商品色の変化", "情報過多な背景"],
+    references: [],
+    comments: []
+  })),
   {
     id: "b1",
     projectId: "p2",
@@ -376,54 +322,78 @@ const statusTone: Record<ProjectStatus | AssetStatus, string> = {
   納品OK: "tone-green"
 };
 
+const levelTone: Record<"低" | "中" | "高", string> = {
+  低: "tone-green",
+  中: "tone-amber",
+  高: "tone-red"
+};
+
+const SPEC_SIZES = ["2000×2500", "2400×1350", "1500×1875", "1500×1500", "1080×1080"];
+const SPEC_FORMATS = ["JPG", "PNG"];
+const SPEC_DPIS = ["350", "300", "72"];
+const ASSIGNEE_OPTIONS = ["未割当", ...initialMemberGroups.flatMap((group) => group.members)];
+
+const CHECK_PHASES = [
+  {
+    group: "生成フェーズ",
+    step: "社内確認",
+    title: "社内（ディレクター） / 生成",
+    target: "生成画像",
+    uploadCta: "生成画像をアップロード（複数可）",
+    memoLabel: "ディレクターへの伝達事項（デザイナー記入）",
+    memoPlaceholder: "例）この方向で進めます。ご確認ください",
+    judgeLabel: "ディレクター判定",
+    notify: "ディレクターに通知",
+    cta: "クライアント確認へ →"
+  },
+  {
+    group: "生成フェーズ",
+    step: "クライアント確認",
+    title: "クライアント / 生成",
+    target: "生成画像",
+    uploadCta: "生成画像をアップロード（複数可）",
+    memoLabel: "クライアントへの伝達事項",
+    memoPlaceholder: "例）ご確認をお願いします",
+    judgeLabel: "クライアント判定",
+    notify: "クライアントに共有",
+    cta: "レタッチへ →"
+  },
+  {
+    group: "レタッチフェーズ",
+    step: "社内確認",
+    title: "社内（ディレクター） / レタッチ後",
+    target: "レタッチ後画像",
+    uploadCta: "レタッチ後画像をアップロード（複数可）",
+    memoLabel: "ディレクターへの伝達事項（レタッチャー記入）",
+    memoPlaceholder: "例）レタッチ完了しました。ご確認ください",
+    judgeLabel: "ディレクター判定",
+    notify: "ディレクターに通知",
+    cta: "クライアント確認へ →"
+  },
+  {
+    group: "レタッチフェーズ",
+    step: "クライアント確認（納品）",
+    title: "クライアント / レタッチ後（納品）",
+    target: "レタッチ後画像",
+    uploadCta: "レタッチ後画像をアップロード（複数可）",
+    memoLabel: "クライアントへの伝達事項",
+    memoPlaceholder: "例）最終版です。ご確認ください",
+    judgeLabel: "クライアント判定",
+    notify: "クライアントに共有",
+    cta: "納品する"
+  }
+];
+
+function toDateValue(due: string) {
+  const [month, day] = due.split("/");
+  if (!month || !day) return "";
+  return `2026-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
 function matchProjectFilter(project: Project, filter: ProjectFilter) {
   if (filter === "all") return true;
   if (filter === "done") return project.status === "納品済";
   return project.status !== "納品済";
-}
-
-function buildActionItems(projects: Project[], assets: Asset[]): ActionItem[] {
-  const items: ActionItem[] = [];
-
-  projects.forEach((project) => {
-    if (project.status === "納品済") return;
-    items.push({
-      id: `project-${project.id}`,
-      projectId: project.id,
-      title:
-        project.status === "要件整理"
-          ? "画像別の要件を確定"
-          : project.status === "確認中"
-            ? "クライアント確認を回収"
-            : "生成・選定状況を確認",
-      context: project.name,
-      owner: project.owner,
-      due: project.period.split(" - ")[1] ?? project.period,
-      tone: project.risk === "高" ? "danger" : project.status === "確認中" ? "warning" : "normal",
-      tab: project.status === "要件整理" ? "direction" : "review"
-    });
-  });
-
-  assets.forEach((asset) => {
-    if (asset.status !== "生成確認" && asset.status !== "レタッチ中") return;
-    const project = projects.find((candidate) => candidate.id === asset.projectId);
-    if (!project) return;
-
-    items.push({
-      id: `asset-${asset.id}`,
-      projectId: asset.projectId,
-      assetId: asset.id,
-      title: asset.status === "生成確認" ? "生成案をチェック" : "レタッチ後をチェック",
-      context: `${project.name} / ${asset.title}`,
-      owner: asset.owner,
-      due: asset.due,
-      tone: asset.status === "レタッチ中" ? "warning" : "normal",
-      tab: "review"
-    });
-  });
-
-  const rank = { danger: 0, warning: 1, normal: 2 };
-  return items.sort((a, b) => rank[a.tone] - rank[b.tone]).slice(0, 6);
 }
 
 function isTabKey(value: string | null): value is TabKey {
@@ -453,7 +423,7 @@ function normalizeRoute(
   const assetId = projectAssets.some((asset) => asset.id === route.assetId) ? route.assetId! : fallbackAssetId;
 
   return {
-    view: route.view === "project" ? "project" : "production",
+    view: route.view === "project" ? "project" : route.view === "members" ? "members" : "production",
     projectId,
     assetId,
     tab: route.tab ?? fallback?.tab ?? "overview",
@@ -464,7 +434,8 @@ function normalizeRoute(
 
 function routeFromSearch(search: string, projects: Project[], assets: Asset[], fallback?: RouteState) {
   const params = new URLSearchParams(search);
-  const view = params.get("view") === "project" ? "project" : "production";
+  const viewParam = params.get("view");
+  const view = viewParam === "project" ? "project" : viewParam === "members" ? "members" : "production";
   const tabParam = params.get("tab");
   const filterParam = params.get("filter");
   const viewerParam = params.get("viewer");
@@ -493,6 +464,8 @@ function routeToUrl(route: RouteState) {
     params.set("tab", route.tab);
     params.set("asset", route.assetId);
     if (route.viewer === "client") params.set("viewer", "client");
+  } else if (route.view === "members") {
+    params.set("view", "members");
   } else if (route.filter !== "all") {
     params.set("filter", route.filter);
   }
@@ -510,8 +483,9 @@ export default function Home() {
   const [selectedAssetId, setSelectedAssetId] = useState(initialAssets[0].id);
   const [tab, setTab] = useState<TabKey>("overview");
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("all");
-  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [openSheet, setOpenSheet] = useState<"info" | "models" | null>(null);
+  const [assetModal, setAssetModal] = useState<{ assetId: string; tab: "req" | "check" } | null>(null);
   const [memberGroups, setMemberGroups] = useState<MemberGroup[]>(initialMemberGroups);
   const [memberDrafts, setMemberDrafts] = useState<Record<MemberRole, string>>({
     ディレクター: "",
@@ -547,8 +521,9 @@ export default function Home() {
     setTab(route.tab);
     setProjectFilter(route.filter);
     setViewerMode(route.viewer);
-    setIsMemberModalOpen(false);
     setIsProjectModalOpen(false);
+    setOpenSheet(null);
+    setAssetModal(null);
   }
 
   function writeRoute(routePatch: Partial<RouteState>, mode: "push" | "replace" = "push") {
@@ -604,7 +579,6 @@ export default function Home() {
     () => projectList.filter((project) => matchProjectFilter(project, projectFilter)),
     [projectFilter, projectList]
   );
-  const actionItems = useMemo(() => buildActionItems(projectList, assetList), [assetList, projectList]);
 
   function openProject(projectId: string, nextTab: TabKey = "overview", assetId?: string) {
     const nextAssets = assetList.filter((asset) => asset.projectId === projectId);
@@ -694,6 +668,7 @@ export default function Home() {
       contact: "未設定",
       status: projectDraft.status,
       risk: projectDraft.risk,
+      priority: projectDraft.priority,
       period,
       volume,
       done,
@@ -726,236 +701,173 @@ export default function Home() {
     setProjectDraft(initialProjectDraft);
   }
 
-  function resetDemo() {
-    const nextRoute: RouteState = {
-      view: "production",
-      projectId: initialProjects[0].id,
-      assetId: initialAssets[0].id,
-      tab: "overview",
-      filter: "all",
-      viewer: "internal"
-    };
-
-    projectListRef.current = initialProjects;
-    assetListRef.current = initialAssets;
-    setProjectList(initialProjects);
-    setAssetList(initialAssets);
-    applyRoute(nextRoute);
-    window.history.replaceState(null, "", routeToUrl(nextRoute));
-    setMemberGroups(initialMemberGroups);
-    setMemberDrafts({
-      ディレクター: "",
-      "デザイナー（生成）": "",
-      レタッチャー: "",
-      CS担当: ""
-    });
-    setProjectDraft(initialProjectDraft);
-  }
-
-  const totalAssets = projectList.reduce((sum, project) => sum + project.volume, 0);
-  const doneAssets = projectList.reduce((sum, project) => sum + project.done, 0);
-  const waitingReviews = assetList.filter((asset) => asset.status === "生成確認" || asset.status === "レタッチ中").length;
-
   return (
     <main className="shell">
       <section className="app">
         <header className="topbar">
-          <div className="brand">
-            <span className="brand-dot" />
-            Clovia
-          </div>
-          <button className="button ghost sm" onClick={resetDemo}>
-            リセット
-          </button>
+          <div className="brand">Clovia</div>
+          <nav className="main-nav">
+            <button
+              className={appView === "production" ? "on" : ""}
+              onClick={() => writeRoute({ view: "production" })}
+            >
+              制作管理
+            </button>
+            <button
+              className={appView === "members" ? "on" : ""}
+              onClick={() => writeRoute({ view: "members" })}
+            >
+              メンバー管理
+            </button>
+          </nav>
         </header>
 
         {appView === "production" ? (
           <>
-            <section className="head">
-              <div>
-                <div className="scope-row">
-                  <span className="scope-pill internal">社内専用</span>
-                  <span className="sub">Cloverseだけが見る全案件ダッシュボード</span>
+            <section className="panel">
+              <div className="panel-head">
+                <div className="seg compact">
+                  <button className={projectFilter === "all" ? "on" : ""} onClick={() => applyProjectFilter("all")}>
+                    すべて
+                  </button>
+                  <button className={projectFilter === "active" ? "on" : ""} onClick={() => applyProjectFilter("active")}>
+                    進行中
+                  </button>
+                  <button className={projectFilter === "done" ? "on" : ""} onClick={() => applyProjectFilter("done")}>
+                    完了
+                  </button>
                 </div>
-                <h1>制作管理</h1>
-                <p>全案件を横断して、進行・滞留・確認待ち・リスクを確認します。案件を開くとクライアント共有前提の案件管理へ移動します。</p>
-              </div>
-              <div className="top-actions">
-                <button className="button ghost sm" onClick={() => setIsMemberModalOpen(true)}>
-                  メンバー管理
-                </button>
                 <button className="button primary sm" onClick={() => setIsProjectModalOpen(true)}>
                   プロジェクト追加
                 </button>
               </div>
-            </section>
 
-            <section className="stats">
-              <Metric label="進行案件" value={`${projectList.length}件`} note="Cloverse管理" />
-              <Metric label="制作画像" value={`${doneAssets}/${totalAssets}`} note="完了 / 総数" />
-              <Metric label="確認待ち" value={`${waitingReviews}件`} note="社内・クライアント" />
-            </section>
-
-            <section className="ops-grid">
-              <div className="panel action-panel">
-                <div className="panel-head">
-                  <div>
-                    <h2>要対応</h2>
-                  </div>
-                  <span className="count">{actionItems.length}</span>
+              {filteredProjectList.length ? (
+                <div className="asset-table-wrap">
+                  <table className="asset-table">
+                    <thead>
+                      <tr>
+                        <th>案件名</th>
+                        <th>ステータス</th>
+                        <th>ブランド</th>
+                        <th>進行リスク</th>
+                        <th>優先度</th>
+                        <th>期間</th>
+                        <th>制作ボリューム</th>
+                        <th>メンバー</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProjectList.map((project) => {
+                        const percent = Math.round((project.done / project.volume) * 100);
+                        return (
+                          <tr
+                            key={project.id}
+                            className="clickable-row"
+                            onClick={() => openProject(project.id)}
+                          >
+                            <td className="row-title">{project.name}</td>
+                            <td>
+                              <Badge tone={statusTone[project.status]}>{project.status}</Badge>
+                            </td>
+                            <td>{project.client}</td>
+                            <td>
+                              <Badge tone={levelTone[project.risk]}>{project.risk}</Badge>
+                            </td>
+                            <td>
+                              <Badge tone={levelTone[project.priority]}>{project.priority}</Badge>
+                            </td>
+                            <td>{project.period}</td>
+                            <td>
+                              <div className="table-progress">
+                                <div className="progress">
+                                  <span style={{ width: `${percent}%` }} />
+                                </div>
+                                <small>
+                                  {project.done}/{project.volume}枚（{percent}%）
+                                </small>
+                              </div>
+                            </td>
+                            <td>{projectMembers(project).join("、")}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="action-list">
-                  {actionItems.map((item) => (
-                    <button className={`action-item ${item.tone}`} key={item.id} onClick={() => openProject(item.projectId, item.tab, item.assetId)}>
-                      <span>{item.due}</span>
-                      <strong>{item.title}</strong>
-                      <p>{item.context}</p>
-                      <small>{item.owner}</small>
-                    </button>
-                  ))}
+              ) : (
+                <div className="empty-state">
+                  <strong>該当する案件がありません</strong>
+                  <p>別のステータスを選択してください。</p>
                 </div>
-              </div>
-
-              <div className="panel">
-                <div className="panel-head">
-                  <div>
-                    <h2>案件一覧</h2>
-                  </div>
-                  <div className="seg compact">
-                    <button className={projectFilter === "all" ? "on" : ""} onClick={() => applyProjectFilter("all")}>
-                      すべて
-                    </button>
-                    <button className={projectFilter === "active" ? "on" : ""} onClick={() => applyProjectFilter("active")}>
-                      進行中
-                    </button>
-                    <button className={projectFilter === "done" ? "on" : ""} onClick={() => applyProjectFilter("done")}>
-                      完了
-                    </button>
-                  </div>
-                </div>
-
-                <div className="project-stack management-list">
-                  {filteredProjectList.map((project) => (
-                    <button className="project-card" key={project.id} onClick={() => openProject(project.id)}>
-                      <div className="project-card-top">
-                        <strong>{project.name}</strong>
-                        <Badge tone={statusTone[project.status]}>{project.status}</Badge>
-                      </div>
-                      <p>ブランド：<b>{project.client}</b></p>
-                      <p>ステータス：<b>{project.summary}</b></p>
-                      <div className="progress-row">
-                        <div className="progress">
-                          <span style={{ width: `${(project.done / project.volume) * 100}%` }} />
-                        </div>
-                        <small>
-                          {project.done}/{project.volume}
-                        </small>
-                      </div>
-                      <div className="meta-row">
-                        <span>担当：{project.owner}</span>
-                        <span>リスク：{project.risk}</span>
-                      </div>
-                    </button>
-                  ))}
-                  {!filteredProjectList.length && (
-                    <div className="empty-state">
-                      <strong>該当する案件がありません</strong>
-                      <p>別のステータスを選択してください。</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-          </>
-        ) : (
-          <>
-            <section className="head project-head">
-              <div>
-                <button className="button ghost sm" onClick={() => writeRoute({ view: "production" })}>
-                  制作管理に戻る
-                </button>
-                <div className="scope-row">
-                  <span className="scope-pill shared">社内・クライアント共有</span>
-                  <span className="sub">該当クライアントは自社案件のみ閲覧</span>
-                </div>
-                <h1>案件管理</h1>
-                <p>案件概要、制作画像、要件整理、チェックをこの案件単位で管理します。</p>
-              </div>
-              <div className="view-toggle">
-                <button className={viewerMode === "internal" ? "on" : ""} onClick={() => writeRoute({ viewer: "internal" })}>
-                  社内表示
-                </button>
-                <button className={viewerMode === "client" ? "on" : ""} onClick={() => writeRoute({ viewer: "client" })}>
-                  クライアント表示
-                </button>
-              </div>
-            </section>
-
-            <section className="panel detail">
-              <div className="detail-hero">
-                <div>
-                  <div className="hero-row">
-                    <Badge tone={statusTone[selectedProject.status]}>{selectedProject.status}</Badge>
-                    <span>{selectedProject.client}</span>
-                    <span>{viewerMode === "internal" ? "社内確認用" : "クライアント共有用"}</span>
-                  </div>
-                  <h2>{selectedProject.name}</h2>
-                  <p>{selectedProject.summary}</p>
-                </div>
-                <div className="deadline">
-                  <span>納期</span>
-                  <strong>{selectedProject.period}</strong>
-                </div>
-              </div>
-
-              <div className="tabs">
-                <TabButton active={tab === "overview"} onClick={() => writeRoute({ tab: "overview" })}>
-                  案件概要
-                </TabButton>
-                <TabButton active={tab === "direction"} onClick={() => writeRoute({ tab: "direction" })}>
-                  画像要件
-                </TabButton>
-                <TabButton active={tab === "review"} onClick={() => writeRoute({ tab: "review" })}>
-                  チェック
-                </TabButton>
-              </div>
-
-              {tab === "overview" && (
-                <Overview
-                  project={selectedProject}
-                  assets={projectAssets}
-                  onOpenAsset={(assetId) => {
-                    writeRoute({ tab: "direction", assetId });
-                  }}
-                />
-              )}
-              {tab === "direction" && (
-                <Direction
-                  assets={projectAssets}
-                  selectedAsset={selectedAsset}
-                  onSelectAsset={(assetId) => writeRoute({ assetId })}
-                />
-              )}
-              {tab === "review" && (
-                <Review
-                  assets={projectAssets}
-                  selectedAsset={selectedAsset}
-                  onSelectAsset={(assetId) => writeRoute({ assetId })}
-                />
               )}
             </section>
           </>
-        )}
-
-        {isMemberModalOpen && (
-          <MemberModal
+        ) : appView === "members" ? (
+          <MembersView
             groups={memberGroups}
             drafts={memberDrafts}
             onDraftChange={(role, value) => setMemberDrafts((drafts) => ({ ...drafts, [role]: value }))}
             onAdd={addMember}
             onRemove={removeMember}
-            onClose={() => setIsMemberModalOpen(false)}
           />
+        ) : (
+          <>
+            <section className="head project-head">
+              <div>
+                <button className="button ghost sm back-button" onClick={() => writeRoute({ view: "production" })}>
+                  ← 戻る
+                </button>
+                <div className="project-head-title">
+                  <div>
+                    <h1 className="project-title">{selectedProject.name}</h1>
+                    <p>{selectedProject.client} ／ {selectedProject.period}</p>
+                  </div>
+                  <div className="project-head-actions">
+                    <button className="button ghost sm" onClick={() => setOpenSheet("info")}>
+                      プロジェクト概要
+                    </button>
+                    <button className="button ghost sm" onClick={() => setOpenSheet("models")}>
+                      モデル登録
+                    </button>
+                  </div>
+                </div>
+                <div className="summary-bar">
+                  <div className="summary-badges">
+                    <Badge tone={statusTone[selectedProject.status]}>{selectedProject.status}</Badge>
+                    <span className="summary-chip">
+                      リスク
+                      <Badge tone={levelTone[selectedProject.risk]}>{selectedProject.risk}</Badge>
+                    </span>
+                    <span className="summary-chip">
+                      優先度
+                      <Badge tone={levelTone[selectedProject.priority]}>{selectedProject.priority}</Badge>
+                    </span>
+                  </div>
+                  <div className="summary-progress">
+                    <div className="progress">
+                      <span
+                        style={{
+                          width: `${Math.round((selectedProject.done / selectedProject.volume) * 100)}%`
+                        }}
+                      />
+                    </div>
+                    <strong>
+                      {selectedProject.done}/{selectedProject.volume}枚
+                    </strong>
+                    <small>{Math.round((selectedProject.done / selectedProject.volume) * 100)}%</small>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="detail">
+              <Overview
+                assets={projectAssets}
+                onOpenAsset={(assetId, tab) => setAssetModal({ assetId, tab })}
+              />
+            </section>
+          </>
         )}
 
         {isProjectModalOpen && (
@@ -968,6 +880,26 @@ export default function Home() {
             onClose={() => setIsProjectModalOpen(false)}
           />
         )}
+
+        {openSheet && appView === "project" && (
+          <InfoSheet mode={openSheet} project={selectedProject} onClose={() => setOpenSheet(null)} />
+        )}
+
+        {assetModal &&
+          appView === "project" &&
+          (() => {
+            const asset = assetList.find((item) => item.id === assetModal.assetId);
+            if (!asset) return null;
+            const number = projectAssets.findIndex((item) => item.id === asset.id) + 1;
+            return (
+              <AssetModal
+                asset={asset}
+                number={number}
+                initialTab={assetModal.tab}
+                onClose={() => setAssetModal(null)}
+              />
+            );
+          })()}
       </section>
     </main>
   );
@@ -975,6 +907,12 @@ export default function Home() {
 
 function memberRole(groups: MemberGroup[], name: string) {
   return groups.find((group) => group.members.includes(name))?.role;
+}
+
+function projectMembers(project: Project) {
+  return Array.from(new Set([project.owner, project.designer, project.retoucher])).filter(
+    (name) => name && name !== "未割当"
+  );
 }
 
 function makeInitialAssets(projectId: string, owner: string, due: string): Asset[] {
@@ -1042,6 +980,14 @@ function ProjectModal({
     }))
   );
   const canCreate = draft.name.trim().length > 0 && draft.client.trim().length > 0;
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -1214,80 +1160,80 @@ function SegmentedChoice<T extends string>({
   );
 }
 
-function MemberModal({
+function MembersView({
   groups,
   drafts,
   onDraftChange,
   onAdd,
-  onRemove,
-  onClose
+  onRemove
 }: {
   groups: MemberGroup[];
   drafts: Record<MemberRole, string>;
   onDraftChange: (role: MemberRole, value: string) => void;
   onAdd: (role: MemberRole) => void;
   onRemove: (role: MemberRole, name: string) => void;
-  onClose: () => void;
 }) {
+  const [role, setRole] = useState<MemberRole>(groups[0]?.role ?? "ディレクター");
+  const rows = groups.flatMap((group) => group.members.map((name) => ({ name, role: group.role })));
+
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section
-        className="member-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="member-modal-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <header className="modal-head">
-          <div>
-            <h2 id="member-modal-title">全社メンバー管理</h2>
-            <p>ここで登録したメンバーが、各プロジェクトの「PJメンバー」割り当て候補になります。</p>
-          </div>
-          <button className="button ghost modal-close" onClick={onClose} aria-label="閉じる">
-            ×
+    <section className="panel">
+      <div className="panel-head">
+        <form
+          className="member-add-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onAdd(role);
+          }}
+        >
+          <select value={role} onChange={(event) => setRole(event.target.value as MemberRole)}>
+            {groups.map((group) => (
+              <option key={group.role} value={group.role}>
+                {group.role}
+              </option>
+            ))}
+          </select>
+          <input
+            value={drafts[role]}
+            onChange={(event) => onDraftChange(role, event.target.value)}
+            placeholder="名前を追加"
+          />
+          <button className="button primary sm" type="submit">
+            追加
           </button>
-        </header>
+        </form>
+      </div>
 
-        <div className="member-groups">
-          {groups.map((group) => (
-            <section className="member-group" key={group.role}>
-              <div className="member-group-title">
-                <h3>{group.role}</h3>
-                <span>{group.members.length}名</span>
-              </div>
-
-              <div className="member-chip-list">
-                {group.members.map((member) => (
-                  <span className="member-chip" key={member}>
-                    {member}
-                    <button onClick={() => onRemove(group.role, member)} aria-label={`${member}を削除`}>
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              <form
-                className="member-add"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  onAdd(group.role);
-                }}
-              >
-                <input
-                  value={drafts[group.role]}
-                  onChange={(event) => onDraftChange(group.role, event.target.value)}
-                  placeholder="名前を追加"
-                />
-                <button className="button ghost" type="submit">
-                  追加
-                </button>
-              </form>
-            </section>
-          ))}
+      {rows.length ? (
+        <div className="asset-table-wrap">
+          <table className="asset-table">
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>役割</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={`${row.role}-${row.name}`}>
+                  <td>{row.name}</td>
+                  <td>{row.role}</td>
+                  <td>
+                    <button onClick={() => onRemove(row.role, row.name)}>削除</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
-    </div>
+      ) : (
+        <div className="empty-state">
+          <strong>メンバーが登録されていません</strong>
+          <p>上の入力欄からメンバーを追加してください。</p>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1300,16 +1246,6 @@ function roleLabel(role: MemberRole) {
   };
 
   return labels[role];
-}
-
-function Metric({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <p>{note}</p>
-    </div>
-  );
 }
 
 function Badge({ children, tone }: { children: React.ReactNode; tone: string }) {
@@ -1332,124 +1268,491 @@ function TabButton({
   );
 }
 
-function Overview({
+function InfoSheet({
+  mode,
   project,
+  onClose
+}: {
+  mode: "info" | "models";
+  project: Project;
+  onClose: () => void;
+}) {
+  const modelSummary = getModelSummary(project.id);
+  const scheduleText = getProjectSchedule(project);
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div className="sheet-backdrop" role="presentation" onMouseDown={onClose}>
+      <aside
+        className="side-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="info-sheet-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="sheet-head">
+          <h2 id="info-sheet-title">{mode === "models" ? "モデル登録" : "プロジェクト概要"}</h2>
+          <button className="button ghost modal-close" onClick={onClose} aria-label="閉じる">
+            ×
+          </button>
+        </header>
+
+        <div className="sheet-body">
+          {mode === "info" ? (
+            <section className="sheet-section">
+            <div className="overview-form">
+              <FormField label="プロジェクト名">
+                <input key={`${project.id}-name`} defaultValue={project.name} />
+              </FormField>
+              <FormField label="ブランド名">
+                <input key={`${project.id}-client`} defaultValue={project.client} />
+              </FormField>
+              <FormField label="PJ背景／クリエイティブ用途">
+                <textarea key={`${project.id}-summary`} defaultValue={project.summary} rows={3} />
+              </FormField>
+              <FormField label="スケジュール（テキスト）">
+                <textarea key={`${project.id}-schedule`} defaultValue={scheduleText} rows={2} />
+              </FormField>
+              <FormField label="その他コメント">
+                <textarea key={`${project.id}-comment`} placeholder="連絡事項・補足など" rows={2} />
+              </FormField>
+              <FormField label="関連リンク（HP・SNSなど）">
+                <textarea
+                  key={`${project.id}-links`}
+                  placeholder="HP・SNSのURLを貼り付け（改行区切りでOK）"
+                  rows={2}
+                />
+              </FormField>
+
+              <div className="overview-upload">
+                <div className="overview-upload-head">
+                  <span>関連資料（アップロード）</span>
+                  <button className="button ghost sm" type="button">
+                    ＋ アップロード
+                  </button>
+                </div>
+                <div className="overview-file-list">
+                  {project.materials.length ? (
+                    project.materials.map((file) => (
+                      <div className="overview-file" key={file}>
+                        <span className="overview-file-name">
+                          <span className="overview-file-clip">📎</span>
+                          {file}
+                        </span>
+                        <button type="button" aria-label={`${file}を削除`}>
+                          ×
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="resource-empty">添付資料はありません</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            </section>
+          ) : (
+            <section className="sheet-section">
+              <div className="model-gender-grid">
+                <ModelGenderGroup label="女性モデル" count={modelSummary.women} />
+                <ModelGenderGroup label="男性モデル" count={modelSummary.men} />
+              </div>
+            </section>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function AssetModal({
+  asset,
+  number,
+  initialTab,
+  onClose
+}: {
+  asset: Asset;
+  number: number;
+  initialTab: "req" | "check";
+  onClose: () => void;
+}) {
+  const [modelCount, setModelCount] = useState(1);
+  const [checkStep, setCheckStep] = useState(0);
+  const [judge, setJudge] = useState<"要修正" | "OK" | null>(null);
+
+  const [specSize, specFormat, specDpi] = asset.format.split(" / ");
+  const phase = CHECK_PHASES[checkStep];
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div className="modal-backdrop asset-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="asset-modal"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="asset-modal-head">
+          <div className="asset-modal-head-left">
+            <span className="asset-modal-kicker">{initialTab === "req" ? "要件指定" : "チェック"}</span>
+            <span className="asset-modal-title">
+              #{number} {asset.title}
+            </span>
+          </div>
+          <button className="button ghost sm" type="button" onClick={onClose}>
+            ✕ 閉じる
+          </button>
+        </header>
+
+        <div className="asset-modal-body">
+          {initialTab === "req" ? (
+            <div className="req-view">
+              <div className="stage-head">
+                <h2>
+                  <span className="stage-num">①</span> 要件指定
+                </h2>
+                <p>オリエンを見て要件を整理 → 要件指定書を作成。生成は別ツールで実施します。</p>
+              </div>
+
+              <div className="req-2pane">
+                {/* 左：オリエン（参照） */}
+                <aside className="orient-pane">
+                  <div className="pane-head">
+                    <h3>オリエン</h3>
+                    <span className="tag-pink">依頼内容</span>
+                  </div>
+                  <p className="pane-note">クライアントからの依頼。ここを見て右側の要件指定書をまとめます。</p>
+
+                  <div className="field">
+                    <span className="field-label">指定スペック</span>
+                    <div className="spec-chips">
+                      <div className="spec-chip">
+                        <span>出力サイズ</span>
+                        <b>{specSize}</b>
+                      </div>
+                      <div className="spec-chip">
+                        <span>形式</span>
+                        <b>{specFormat}</b>
+                      </div>
+                      <div className="spec-chip">
+                        <span>DPI</span>
+                        <b>{specDpi?.replace("dpi", "")}</b>
+                      </div>
+                    </div>
+                    <span className="spec-note">※ スペックは「画像一覧」で設定</span>
+                  </div>
+
+                  <div className="field">
+                    <span className="field-label">依頼概要</span>
+                    <p className="orient-text">{asset.concept}</p>
+                  </div>
+
+                  <div className="field">
+                    <span className="field-label">参考画像</span>
+                    {asset.references.length ? (
+                      <div className="orient-refs">
+                        {asset.references.map((ref) => (
+                          <span className="ref-chip" key={ref}>
+                            📎 {ref}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="muted-inline">参考画像はありません</p>
+                    )}
+                  </div>
+                </aside>
+
+                {/* 右：要件指定書（作成） */}
+                <div className="req-pane">
+                  <div className="pane-head">
+                    <h3>要件指定書</h3>
+                    <span className="muted-inline">この内容をデザイナーへ渡します</span>
+                  </div>
+
+                  <div className="field">
+                    <span className="field-label">対象画像（タイトル）</span>
+                    <input className="modal-input" defaultValue={asset.title} />
+                  </div>
+
+                  <div className="req-items-head">
+                    <div className="req-items-title">
+                      <h4>要件（画像＋コメント）</h4>
+                    </div>
+                    <div className="req-items-actions">
+                      <button className="button ghost sm" type="button">
+                        ⬇ 画像DL
+                      </button>
+                      <div className="model-count">
+                        <span>モデル人数</span>
+                        <div className="count-seg">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              className={modelCount === n ? "on" : ""}
+                              onClick={() => setModelCount(n)}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <button className="button ghost sm" type="button">
+                        ＋ 項目を追加
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="req-item">
+                    <div className="req-item-label">全体イメージ</div>
+                    <div className="req-item-body">
+                      <div className="req-uploads">
+                        <div className="upload-slot">
+                          <button className="slot-x" type="button">
+                            ×
+                          </button>
+                        </div>
+                        <button className="slot-add" type="button">
+                          ＋
+                        </button>
+                      </div>
+                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+                    </div>
+                  </div>
+
+                  <div className="req-item req-item-client">
+                    <div className="req-item-label">
+                      コーディネート <span className="tag-pink">クライアント入力</span>
+                      <span className="muted-inline">正面のみ表示・クリックで裏/横/ディテール</span>
+                    </div>
+                    <div className="req-item-body">
+                      <div className="req-uploads">
+                        <div className="upload-slot">
+                          <span className="slot-badge">1枚</span>
+                          <span className="slot-num">1</span>
+                        </div>
+                        <div className="upload-slot">
+                          <span className="slot-badge">1枚</span>
+                          <span className="slot-num">2</span>
+                        </div>
+                        <button className="slot-add" type="button">
+                          ＋
+                        </button>
+                      </div>
+                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+                    </div>
+                  </div>
+
+                  <div className="req-item">
+                    <div className="req-item-label">モデル</div>
+                    <div className="req-item-body">
+                      <div className="req-uploads">
+                        <div className="model-pill">♀</div>
+                        <div className="model-pill">♀</div>
+                        <div className="model-pill">♂</div>
+                        <button className="slot-add-dashed" type="button">
+                          ＋ モデル追加
+                        </button>
+                      </div>
+                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+                    </div>
+                  </div>
+
+                  <div className="req-item">
+                    <div className="req-item-label">スタイリング</div>
+                    <div className="req-item-body">
+                      <div className="req-uploads">
+                        <button className="slot-add" type="button">
+                          ＋
+                        </button>
+                      </div>
+                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+                    </div>
+                  </div>
+
+                  <div className="req-item">
+                    <div className="req-item-label">ヘアメイク</div>
+                    <div className="req-item-body">
+                      <div className="req-uploads">
+                        <button className="slot-add" type="button">
+                          ＋
+                        </button>
+                      </div>
+                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+                    </div>
+                  </div>
+
+                  <div className="modal-foot">
+                    <button className="button primary" type="button">
+                      要件を確定して通知（デザイナーへ）
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="check-view">
+              <div className="stage-head">
+                <h2>
+                  <span className="stage-num">②</span> チェック
+                </h2>
+                <p>生成（大枠の方向性確認）とレタッチ後（最終チェック）を明確に分け、クライアントOKで納品。</p>
+              </div>
+
+              <div className="check-steps">
+                {CHECK_PHASES.map((item, index) => (
+                  <button
+                    key={item.title}
+                    type="button"
+                    className={`check-step ${checkStep === index ? "on" : ""} ${
+                      index < checkStep ? "done" : ""
+                    }`}
+                    onClick={() => setCheckStep(index)}
+                  >
+                    <span className="step-dot">{index < checkStep ? "✓" : index + 1}</span>
+                    <span className="step-label">
+                      <b>{item.step}</b>
+                      <small>{item.group}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="check-phase-bar">
+                <strong>{phase.title}</strong>
+                <span>アップロード → レビュー（OK/要修正）</span>
+              </div>
+
+              <div className="check-cols">
+                <section className="modal-card check-col">
+                  <span className="field-label">確認対象（{phase.target}）</span>
+                  <span className="tag-pink solid">未アップロード</span>
+                  <div className="check-drop" />
+                  <button className="button primary" type="button">
+                    {phase.uploadCta}
+                  </button>
+                  <p className="muted-inline">またはプレビューにドラッグ＆ドロップ</p>
+                  <p className="check-note">
+                    候補を複数枚アップロードできます。初回は「初稿」、要修正後は「再修正」として記録。
+                  </p>
+                  <div className="check-notify">
+                    <button className="button ghost sm" type="button">
+                      {phase.notify}
+                    </button>
+                    <span className="muted-inline">アップロード・伝達事項の記載後に通知</span>
+                  </div>
+                </section>
+
+                <section className="modal-card check-col">
+                  <span className="field-label">{phase.memoLabel}</span>
+                  <textarea className="modal-input" rows={4} placeholder={phase.memoPlaceholder} />
+                  <span className="field-label">{phase.judgeLabel}</span>
+                  <div className="judge-row">
+                    <div className="judge-seg">
+                      <button
+                        type="button"
+                        className={judge === "要修正" ? "on" : ""}
+                        onClick={() => setJudge("要修正")}
+                      >
+                        要修正
+                      </button>
+                      <button
+                        type="button"
+                        className={judge === "OK" ? "on" : ""}
+                        onClick={() => setJudge("OK")}
+                      >
+                        OK
+                      </button>
+                    </div>
+                    <span className="judge-status">{judge ?? "未選択"}</span>
+                  </div>
+                  <div className="check-col-foot">
+                    {checkStep > 0 && (
+                      <button
+                        className="button ghost"
+                        type="button"
+                        onClick={() => setCheckStep((step) => step - 1)}
+                      >
+                        ← 前の段階
+                      </button>
+                    )}
+                    <button
+                      className="button primary"
+                      type="button"
+                      onClick={() => setCheckStep((step) => Math.min(step + 1, CHECK_PHASES.length - 1))}
+                    >
+                      {phase.cta}
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Overview({
   assets,
   onOpenAsset
 }: {
-  project: Project;
   assets: Asset[];
-  onOpenAsset: (assetId: string) => void;
+  onOpenAsset: (assetId: string, tab: "req" | "check") => void;
 }) {
-  const modelSummary = getModelSummary(project.id);
-  const schedule = getProjectSchedule(project);
-  const links = getProjectLinks(project);
-
   return (
     <div className="overview-layout">
-      <section className="sub-panel overview-main">
-        <div className="section-title-row">
-          <div>
-            <h3>プロジェクト概要</h3>
-          </div>
-          <Badge tone={statusTone[project.status]}>{project.status}</Badge>
-        </div>
-
-        <div className="info-grid project-brief-grid">
-          <Info label="プロジェクト名" value={project.name} />
-          <Info label="ブランド名" value={project.client} />
-          <Info label="窓口" value={project.contact} />
-          <Info label="期間" value={project.period} />
-          <Info label="ディレクター" value={project.owner} />
-          <Info label="生成担当" value={project.designer} />
-          <Info label="レタッチャー" value={project.retoucher} />
-          <Info label="進行リスク" value={project.risk} />
-        </div>
-
-        <div className="overview-text-grid">
-          <div>
-            <h4>PJ背景 / クリエイティブ用途</h4>
-            <p>{project.summary}</p>
-          </div>
-          <div>
-            <h4>スケジュール</h4>
-            <p>{schedule}</p>
-          </div>
-        </div>
-      </section>
-
-      <div className="overview-grid">
-        <section className="sub-panel">
-          <div className="section-title-row">
-            <h3>関連資料</h3>
-          </div>
-          <div className="file-list">
-            {project.materials.map((file) => (
-              <div key={file}>
-                <span>添付</span>
-                <p>{file}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="sub-panel">
-          <div className="section-title-row">
-            <h3>関連リンク</h3>
-          </div>
-          <div className="link-list">
-            {links.map((link) => (
-              <div key={link.label}>
-                <span>{link.type}</span>
-                <p>{link.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <div className="overview-grid">
-        <section className="sub-panel">
-          <div className="section-title-row">
-            <h3>モデル登録</h3>
-          </div>
-          <div className="model-grid">
-            <ModelSlot label="女性モデル" value={modelSummary.women} />
-            <ModelSlot label="男性モデル" value={modelSummary.men} />
-          </div>
-        </section>
-
-        <section className="sub-panel">
-          <div className="section-title-row">
-            <h3>納品物</h3>
-          </div>
-          <div className="chips">
-            {project.deliverables.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <section className="sub-panel">
+      {/* 画像一覧（作業の主役・枠なし） */}
+      <section className="asset-list-panel">
         <div className="section-title-row">
           <div>
             <h3>画像一覧</h3>
           </div>
-          <span className="muted-pill">{assets.length}枚</span>
+          <div className="section-title-actions">
+            <button className="button primary sm">＋ 画像を追加</button>
+          </div>
         </div>
 
         <div className="asset-table-wrap">
           <table className="asset-table">
+            <colgroup>
+              <col className="col-id" />
+              <col className="col-title" />
+              <col className="col-date" />
+              <col className="col-date" />
+              <col className="col-assignee" />
+              <col className="col-spec" />
+              <col className="col-status" />
+              <col className="col-progress" />
+              <col className="col-ops" />
+            </colgroup>
             <thead>
               <tr>
-                <th>番号</th>
+                <th>ID</th>
                 <th>画像タイトル</th>
+                <th>生成確認</th>
                 <th>納品期限</th>
-                <th>担当</th>
+                <th>担当（生成/レタッチ）</th>
                 <th>指定スペック</th>
                 <th>ステータス</th>
-                <th>進行</th>
+                <th>進行（要件/チェック）</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -1457,15 +1760,94 @@ function Overview({
                 <tr key={asset.id}>
                   <td>#{index + 1}</td>
                   <td>
-                    <button onClick={() => onOpenAsset(asset.id)}>{asset.title}</button>
+                    <input className="cell-title-input" defaultValue={asset.title} />
                   </td>
-                  <td>{asset.due}</td>
-                  <td>{asset.owner}</td>
-                  <td>{asset.format}</td>
+                  <td>
+                    <input type="date" className="cell-date" />
+                  </td>
+                  <td>
+                    <input type="date" className="cell-date" defaultValue={toDateValue(asset.due)} />
+                  </td>
+                  <td>
+                    <div className="assignee-selects">
+                      <div className="assignee-row">
+                        <span>生成</span>
+                        <select defaultValue={asset.owner}>
+                          {ASSIGNEE_OPTIONS.map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="assignee-row">
+                        <span>レタッチ</span>
+                        <select defaultValue="未割当">
+                          {ASSIGNEE_OPTIONS.map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="spec-selects">
+                      <select defaultValue={asset.format.split(" / ")[0]}>
+                        {SPEC_SIZES.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                      <select defaultValue={asset.format.split(" / ")[1]}>
+                        {SPEC_FORMATS.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                      <select defaultValue={asset.format.split(" / ")[2]?.replace("dpi", "")}>
+                        {SPEC_DPIS.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
                   <td>
                     <Badge tone={statusTone[asset.status]}>{asset.status}</Badge>
                   </td>
-                  <td>{asset.progress}%</td>
+                  <td>
+                    <div className="progress-actions">
+                      <button
+                        className="button ghost sm"
+                        type="button"
+                        onClick={() => onOpenAsset(asset.id, "req")}
+                      >
+                        要件指定
+                      </button>
+                      <button
+                        className="button ghost sm"
+                        type="button"
+                        onClick={() => onOpenAsset(asset.id, "check")}
+                      >
+                        チェック
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="row-ops">
+                      <button type="button" aria-label="複製">
+                        ⧉
+                      </button>
+                      <button type="button" aria-label="削除">
+                        🗑
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1473,20 +1855,24 @@ function Overview({
         </div>
       </section>
 
+      {/* 5. 画像プレビュー */}
       <section className="sub-panel">
         <div className="section-title-row">
           <div>
             <h3>画像プレビュー</h3>
           </div>
+          <button className="button ghost sm">⬇ 一括ダウンロード</button>
         </div>
 
         <div className="asset-preview-grid">
           {assets.map((asset, index) => (
-            <button className="asset-preview-card" key={asset.id} onClick={() => onOpenAsset(asset.id)}>
+            <button className="asset-preview-card" key={asset.id} onClick={() => onOpenAsset(asset.id, "req")}>
               <div className="asset-preview-thumb">
                 <span>{asset.progress > 0 ? `${asset.progress}%` : "未生成"}</span>
               </div>
-              <strong>#{index + 1} {asset.title}</strong>
+              <strong>
+                #{index + 1} {asset.title}
+              </strong>
               <small>{asset.status}</small>
             </button>
           ))}
@@ -1507,14 +1893,6 @@ function getProjectSchedule(project: Project) {
   return schedules[project.id] ?? `${project.period}内で、要件整理 → 生成 → 確認 → レタッチ → 納品まで進行`;
 }
 
-function getProjectLinks(project: Project) {
-  return [
-    { type: "公式", label: `${project.client} 公式サイト` },
-    { type: "投稿", label: "過去投稿リファレンス" },
-    { type: "掲載", label: `${project.name} 掲載予定ページ` }
-  ];
-}
-
 function getModelSummary(projectId: string) {
   const summaries: Record<string, { women: number; men: number }> = {
     p1: { women: 2, men: 1 },
@@ -1526,12 +1904,22 @@ function getModelSummary(projectId: string) {
   return summaries[projectId] ?? { women: 0, men: 0 };
 }
 
-function ModelSlot({ label, value }: { label: string; value: number }) {
+function ModelGenderGroup({ label, count }: { label: string; count: number }) {
   return (
-    <div className="model-slot">
-      <span>{label}</span>
-      <strong>{value}名</strong>
-      <p>{value > 0 ? "候補素材を登録済み" : "未登録"}</p>
+    <div className="model-gender">
+      <span className="model-gender-label">{label}</span>
+      <div className="model-card-row">
+        {Array.from({ length: count }).map((_, index) => (
+          <div className="model-card" key={`${label}-${index}`}>
+            <button className="model-card-remove" type="button" aria-label="モデルを削除">
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <button className="button ghost model-add-btn" type="button">
+        ＋ モデルを追加
+      </button>
     </div>
   );
 }
