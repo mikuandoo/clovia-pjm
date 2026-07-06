@@ -486,6 +486,7 @@ export default function Home() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [openSheet, setOpenSheet] = useState<"info" | "models" | null>(null);
   const [assetModal, setAssetModal] = useState<{ assetId: string; tab: "req" | "check" } | null>(null);
+  const [previewAsset, setPreviewAsset] = useState<string | null>(null);
   const [memberGroups, setMemberGroups] = useState<MemberGroup[]>(initialMemberGroups);
   const [memberDrafts, setMemberDrafts] = useState<Record<MemberRole, string>>({
     ディレクター: "",
@@ -524,6 +525,7 @@ export default function Home() {
     setIsProjectModalOpen(false);
     setOpenSheet(null);
     setAssetModal(null);
+    setPreviewAsset(null);
   }
 
   function writeRoute(routePatch: Partial<RouteState>, mode: "push" | "replace" = "push") {
@@ -865,6 +867,7 @@ export default function Home() {
               <Overview
                 assets={projectAssets}
                 onOpenAsset={(assetId, tab) => setAssetModal({ assetId, tab })}
+                onPreview={(assetId) => setPreviewAsset(assetId)}
               />
             </section>
           </>
@@ -899,6 +902,14 @@ export default function Home() {
                 onClose={() => setAssetModal(null)}
               />
             );
+          })()}
+
+        {previewAsset &&
+          appView === "project" &&
+          (() => {
+            const asset = assetList.find((item) => item.id === previewAsset);
+            if (!asset) return null;
+            return <ImageLightbox asset={asset} onClose={() => setPreviewAsset(null)} />;
           })()}
       </section>
     </main>
@@ -1709,12 +1720,50 @@ function AssetModal({
   );
 }
 
+function ImageLightbox({ asset, onClose }: { asset: Asset; onClose: () => void }) {
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div className="modal-backdrop lightbox-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="lightbox"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="lightbox-head">
+          <h2>{asset.title}</h2>
+          <button className="button ghost sm" type="button" onClick={onClose}>
+            ✕ 閉じる
+          </button>
+        </header>
+        <div className="lightbox-image">
+          <span className="lightbox-badge">
+            {asset.progress > 0 ? `${asset.progress}%` : "未生成"}
+          </span>
+        </div>
+        <footer className="lightbox-foot">
+          ステータス：{asset.status}／納品期限：{toDateValue(asset.due)}
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 function Overview({
   assets,
-  onOpenAsset
+  onOpenAsset,
+  onPreview
 }: {
   assets: Asset[];
   onOpenAsset: (assetId: string, tab: "req" | "check") => void;
+  onPreview: (assetId: string) => void;
 }) {
   const [view, setView] = useState<"list" | "gallery">("list");
 
@@ -1871,7 +1920,7 @@ function Overview({
         {view === "gallery" && (
           <div className="asset-preview-grid">
           {assets.map((asset, index) => (
-            <button className="asset-preview-card" key={asset.id} onClick={() => onOpenAsset(asset.id, "req")}>
+            <button className="asset-preview-card" key={asset.id} onClick={() => onPreview(asset.id)}>
               <div className="asset-preview-thumb">
                 <span>{asset.progress > 0 ? `${asset.progress}%` : "未生成"}</span>
               </div>

@@ -2022,6 +2022,72 @@ h1.project-title {
   font-weight: 600;
 }
 
+/* 画像拡大ライトボックス */
+.lightbox-backdrop {
+  place-items: center;
+  padding: 24px;
+}
+
+.lightbox {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  border-radius: 18px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.lightbox-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.lightbox-head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.lightbox-image {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  margin: 0 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--lav-soft2) 0,
+    var(--lav-soft2) 10px,
+    #fff 10px,
+    #fff 20px
+  );
+  overflow: hidden;
+}
+
+.lightbox-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lightbox-foot {
+  flex: 0 0 auto;
+  padding: 16px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .muted-pill {
   flex: 0 0 auto;
   border-radius: 999px;
