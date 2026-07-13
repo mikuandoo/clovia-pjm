@@ -328,59 +328,106 @@ const levelTone: Record<"低" | "中" | "高", string> = {
   高: "tone-red"
 };
 
+// チェックモーダルのフェーズ表現に合わせた作業状況ラベル（作業状況から自動連携）
+const CHECK_STATUS_LABEL: Record<AssetStatus, { label: string; tone: string }> = {
+  未着手: { label: "未着手", tone: "tone-muted" },
+  要件確定: { label: "社内 / 生成", tone: "tone-blue" },
+  生成確認: { label: "クライアント / 生成", tone: "tone-purple" },
+  レタッチ中: { label: "社内 / レタッチ後", tone: "tone-amber" },
+  納品OK: { label: "納品完了", tone: "tone-green" }
+};
+
 const SPEC_SIZES = ["2000×2500", "2400×1350", "1500×1875", "1500×1500", "1080×1080"];
 const SPEC_FORMATS = ["JPG", "PNG"];
 const SPEC_DPIS = ["350", "300", "72"];
 const ASSIGNEE_OPTIONS = ["未割当", ...initialMemberGroups.flatMap((group) => group.members)];
+
+type ReqTabType = "overall" | "coordinate" | "model" | "single";
+
+type ReqTab = {
+  id: string;
+  label: string;
+  type: ReqTabType;
+  removable?: boolean;
+};
+
+const BASE_REQ_TABS: ReqTab[] = [
+  { id: "overall", label: "全体イメージ", type: "overall" },
+  { id: "coordinate", label: "コーディネート", type: "coordinate" },
+  { id: "model", label: "モデル", type: "model" },
+  { id: "styling", label: "スタイリング", type: "single" },
+  { id: "hairmake", label: "ヘアメイク", type: "single" }
+];
 
 const CHECK_PHASES = [
   {
     group: "生成フェーズ",
     step: "社内確認",
     title: "社内（ディレクター） / 生成",
-    target: "生成画像",
+    flow: "アップロード → レビュー（OK/要修正）",
+    targetLabel: "確認対象（生成画像）",
     uploadCta: "生成画像をアップロード（複数可）",
+    points: [] as string[],
     memoLabel: "ディレクターへの伝達事項（デザイナー記入）",
     memoPlaceholder: "例）この方向で進めます。ご確認ください",
     judgeLabel: "ディレクター判定",
     notify: "ディレクターに通知",
-    cta: "クライアント確認へ →"
+    cta: "クライアント確認へ →",
+    ctaNote: "",
+    deliver: false
   },
   {
     group: "生成フェーズ",
     step: "クライアント確認",
     title: "クライアント / 生成",
-    target: "生成画像",
+    flow: "アップロード → レビュー（OK/要修正）",
+    targetLabel: "確認対象（生成画像）",
     uploadCta: "生成画像をアップロード（複数可）",
-    memoLabel: "クライアントへの伝達事項",
-    memoPlaceholder: "例）ご確認をお願いします",
+    points: [
+      "構図・トリミングの大枠",
+      "モデル・ポージングの方向性",
+      "シーン／トーンの雰囲気",
+      "スタイリングの見え方"
+    ] as string[],
+    memoLabel: "クライアントへの伝達事項（デザイナー記入）",
+    memoPlaceholder: "例）この方向で進めます。ご確認ください",
     judgeLabel: "クライアント判定",
-    notify: "クライアントに共有",
-    cta: "レタッチへ →"
+    notify: "クライアントに通知",
+    cta: "社内/レタッチ後へ →",
+    ctaNote: "",
+    deliver: false
   },
   {
     group: "レタッチフェーズ",
     step: "社内確認",
     title: "社内（ディレクター） / レタッチ後",
-    target: "レタッチ後画像",
-    uploadCta: "レタッチ後画像をアップロード（複数可）",
-    memoLabel: "ディレクターへの伝達事項（レタッチャー記入）",
-    memoPlaceholder: "例）レタッチ完了しました。ご確認ください",
+    flow: "納品に向けた確認",
+    targetLabel: "レタッチ後画像（未反映）",
+    uploadCta: "レタッチ画像をアップロード（複数可）",
+    points: [] as string[],
+    memoLabel: "ディレクターへの伝達事項（デザイナー記入）",
+    memoPlaceholder: "例）ご確認ください。修正点あればお知らせください",
     judgeLabel: "ディレクター判定",
     notify: "ディレクターに通知",
-    cta: "クライアント確認へ →"
+    cta: "クライアント確認へ →",
+    ctaNote: "クライアントOKで納品できます",
+    deliver: false
   },
   {
     group: "レタッチフェーズ",
     step: "クライアント確認（納品）",
     title: "クライアント / レタッチ後（納品）",
-    target: "レタッチ後画像",
-    uploadCta: "レタッチ後画像をアップロード（複数可）",
-    memoLabel: "クライアントへの伝達事項",
-    memoPlaceholder: "例）最終版です。ご確認ください",
+    flow: "納品に向けた確認",
+    targetLabel: "レタッチ後画像（未反映）",
+    uploadCta: "レタッチ画像をアップロード（複数可）",
+    points: [] as string[],
+    memoLabel: "クライアントへの伝達事項（デザイナー記入）",
+    memoPlaceholder: "例）ご確認ください。修正点あればお知らせください",
     judgeLabel: "クライアント判定",
-    notify: "クライアントに共有",
-    cta: "納品する"
+    notify: "クライアントに通知",
+    cta: "納品完了",
+    ctaNote: "クライアントOKで納品できます",
+    deliver: true
   }
 ];
 
@@ -485,7 +532,7 @@ export default function Home() {
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("all");
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [openSheet, setOpenSheet] = useState<"info" | "models" | null>(null);
-  const [assetModal, setAssetModal] = useState<{ assetId: string; tab: "req" | "check" } | null>(null);
+  const [assetModal, setAssetModal] = useState<{ assetId: string; tab: "req" | "gen" | "check" } | null>(null);
   const [previewAsset, setPreviewAsset] = useState<string | null>(null);
   const [memberGroups, setMemberGroups] = useState<MemberGroup[]>(initialMemberGroups);
   const [memberDrafts, setMemberDrafts] = useState<Record<MemberRole, string>>({
@@ -495,6 +542,7 @@ export default function Home() {
     CS担当: ""
   });
   const [projectDraft, setProjectDraft] = useState<ProjectDraft>(initialProjectDraft);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const projectListRef = useRef(projectList);
   const assetListRef = useRef(assetList);
   const routeRef = useRef<RouteState>({
@@ -590,6 +638,32 @@ export default function Home() {
       assetId: assetId ?? nextAssets[0]?.id ?? assetList[0].id,
       tab: nextTab
     });
+  }
+
+  function issueProjectLink(projectId: string) {
+    const nextAssets = assetList.filter((asset) => asset.projectId === projectId);
+    const route: RouteState = {
+      view: "project",
+      projectId,
+      assetId: nextAssets[0]?.id ?? assetList[0].id,
+      tab: "overview",
+      filter: "all",
+      viewer: "client"
+    };
+    const url = window.location.origin + routeToUrl(route);
+
+    const markCopied = () => {
+      setCopiedLinkId(projectId);
+      window.setTimeout(() => {
+        setCopiedLinkId((current) => (current === projectId ? null : current));
+      }, 2000);
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(markCopied).catch(() => window.prompt("リンクをコピーしてください", url));
+    } else {
+      window.prompt("リンクをコピーしてください", url);
+    }
   }
 
   function applyProjectFilter(filter: ProjectFilter) {
@@ -832,32 +906,12 @@ export default function Home() {
                     <button className="button ghost sm" onClick={() => setOpenSheet("models")}>
                       モデル登録
                     </button>
-                  </div>
-                </div>
-                <div className="summary-bar">
-                  <div className="summary-badges">
-                    <Badge tone={statusTone[selectedProject.status]}>{selectedProject.status}</Badge>
-                    <span className="summary-chip">
-                      リスク
-                      <Badge tone={levelTone[selectedProject.risk]}>{selectedProject.risk}</Badge>
-                    </span>
-                    <span className="summary-chip">
-                      優先度
-                      <Badge tone={levelTone[selectedProject.priority]}>{selectedProject.priority}</Badge>
-                    </span>
-                  </div>
-                  <div className="summary-progress">
-                    <div className="progress">
-                      <span
-                        style={{
-                          width: `${Math.round((selectedProject.done / selectedProject.volume) * 100)}%`
-                        }}
-                      />
-                    </div>
-                    <strong>
-                      {selectedProject.done}/{selectedProject.volume}枚
-                    </strong>
-                    <small>{Math.round((selectedProject.done / selectedProject.volume) * 100)}%</small>
+                    <button
+                      className="button primary sm"
+                      onClick={() => issueProjectLink(selectedProject.id)}
+                    >
+                      {copiedLinkId === selectedProject.id ? "✓ コピーしました" : "🔗 リンクを発行"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -894,6 +948,9 @@ export default function Home() {
             const asset = assetList.find((item) => item.id === assetModal.assetId);
             if (!asset) return null;
             const number = projectAssets.findIndex((item) => item.id === asset.id) + 1;
+            if (assetModal.tab === "gen") {
+              return <GenerateModal asset={asset} onClose={() => setAssetModal(null)} />;
+            }
             return (
               <AssetModal
                 asset={asset}
@@ -1378,7 +1435,451 @@ function InfoSheet({
             </section>
           )}
         </div>
+        <footer className="sheet-foot">
+          <button className="button ghost" type="button" onClick={onClose}>
+            キャンセル
+          </button>
+          <button className="button primary" type="button" onClick={onClose}>
+            保存
+          </button>
+        </footer>
       </aside>
+    </div>
+  );
+}
+
+function ImageZoom({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="image-zoom-backdrop" role="presentation" onMouseDown={onClose}>
+      <div className="image-zoom" onMouseDown={(event) => event.stopPropagation()}>
+        <button className="button ghost sm image-zoom-close" type="button" onClick={onClose}>
+          ✕ 閉じる
+        </button>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="拡大表示" />
+      </div>
+    </div>
+  );
+}
+
+function UploadSlots() {
+  const [images, setImages] = useState<string[]>([]);
+  const [zoom, setZoom] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const add = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setImages((prev) => [...prev, ...Array.from(files).map((file) => URL.createObjectURL(file))]);
+  };
+  const remove = (index: number) => setImages((prev) => prev.filter((_, i) => i !== index));
+
+  return (
+    <div className="req-uploads">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(event) => {
+          add(event.target.files);
+          event.target.value = "";
+        }}
+      />
+      {images.map((src, index) => (
+        <button
+          type="button"
+          className="upload-slot filled"
+          key={src}
+          onClick={() => setZoom(src)}
+          aria-label={`画像${index + 1}を拡大`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={`アップロード画像 ${index + 1}`} />
+          <span
+            className="slot-x"
+            role="button"
+            aria-label={`画像${index + 1}を削除`}
+            onClick={(event) => {
+              event.stopPropagation();
+              remove(index);
+            }}
+          >
+            ×
+          </span>
+          <span className="slot-num">{index + 1}</span>
+        </button>
+      ))}
+      <button className="slot-add" type="button" onClick={() => inputRef.current?.click()}>
+        ＋
+      </button>
+      {zoom && <ImageZoom src={zoom} onClose={() => setZoom(null)} />}
+    </div>
+  );
+}
+
+function ReqModelRows({
+  count,
+  kind
+}: {
+  count: number;
+  kind: "coordinate" | "model" | "single";
+}) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, index) => (
+        <div className="req-model-row" key={index}>
+          <div className="req-model-label">モデル{index + 1}</div>
+          <div className="req-model-body">
+            {kind === "model" ? (
+              <div className="req-uploads">
+                <div className="model-pill">♀</div>
+                <div className="model-pill">♀</div>
+                <div className="model-pill">♂</div>
+                <div className="model-pill">♂</div>
+                <div className="model-pill">♂</div>
+                <button className="slot-add-dashed" type="button">
+                  ＋ モデル追加
+                </button>
+              </div>
+            ) : (
+              <UploadSlots />
+            )}
+            <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+const GEN_DESTINATIONS = ["社内/生成", "クライアント/生成", "社内/レタッチ後", "クライアント/レタッチ後"];
+
+const DIRECTION_SECTIONS: { label: string; images: number; comment: string }[] = [
+  {
+    label: "概要コメント",
+    images: 0,
+    comment:
+      "ECトップのメインKV。春の新作トップスを主役に、休日の朝の外出シーンを想起させる明るく軽やかなトーンで。"
+  },
+  {
+    label: "全体イメージ",
+    images: 1,
+    comment: "全身が無理なく収まり、上下に余白を確保（バナー転用前提）。屋外の並木道で自然光を希望。"
+  },
+  {
+    label: "コーディネート",
+    images: 2,
+    comment: "白系トップス＋ベージュボトムスのナチュラルコーデ。正面／背面の2カット。"
+  },
+  { label: "モデル", images: 0, comment: "20代後半・ナチュラルメイク・自然な表情。" },
+  { label: "スタイリング", images: 0, comment: "抜け感のある軽やかなスタイリング。小物は最小限。" },
+  { label: "ヘアメイク", images: 0, comment: "ダウンスタイル／ツヤ感のあるナチュラルメイク。" }
+];
+
+function DirectionSheet({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div className="modal-backdrop direction-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="direction-sheet"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="direction-head">
+          <h2>ディレクション（要件）内容</h2>
+          <button className="button ghost sm" type="button" onClick={onClose}>
+            × 閉じる
+          </button>
+        </header>
+        <div className="direction-body">
+          {DIRECTION_SECTIONS.map((section) => (
+            <div className="direction-section" key={section.label}>
+              <span className="direction-label">{section.label}</span>
+              {section.images > 0 && (
+                <div className="direction-thumbs">
+                  {Array.from({ length: section.images }).map((_, index) => (
+                    <div className="direction-thumb" key={index} />
+                  ))}
+                </div>
+              )}
+              <p className="direction-text">{section.comment || "—"}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }) {
+  const [showDirection, setShowDirection] = useState(false);
+  const [generatingPrompt, setGeneratingPrompt] = useState(false);
+  const [generatingImages, setGeneratingImages] = useState(false);
+  const [tab, setTab] = useState<"init" | "fix">("init");
+  const [outputCount, setOutputCount] = useState(5);
+  const [variation, setVariation] = useState<"same" | "minor">("same");
+  const [candidates, setCandidates] = useState<number[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [destination, setDestination] = useState(GEN_DESTINATIONS[0]);
+  const [prompt, setPrompt] = useState("");
+
+  const instructionDefault = [
+    "# ディレクション内容",
+    "",
+    `概要:（${asset.concept ? "記載あり" : "記載なし"}）`,
+    "全体イメージ:（指定なし）",
+    "コーディネート:（指定なし）",
+    "モデル:（指定なし）",
+    "スタイリング:（指定なし）",
+    "ヘアメイク:（指定なし）"
+  ].join("\n");
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  const generate = () => {
+    setGeneratingImages(true);
+    setCandidates([]);
+    setSelected(null);
+    window.setTimeout(() => {
+      setCandidates(Array.from({ length: outputCount }, (_, index) => index));
+      setGeneratingImages(false);
+    }, 1400);
+  };
+
+  const createPrompt = () => {
+    setGeneratingPrompt(true);
+    window.setTimeout(() => {
+      setPrompt(
+        "A woman in her late 20s wearing a light spring top and beige bottoms, natural makeup, standing on a tree-lined street in soft morning light. Full-body composition with margin at top and bottom for banner use. Bright, airy and gentle tone, photorealistic, high resolution."
+      );
+      setGeneratingPrompt(false);
+    }, 1200);
+  };
+
+  return (
+    <div className="modal-backdrop asset-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="asset-modal asset-modal--gen"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="asset-modal-head">
+          <div className="asset-modal-head-left">
+            <span className="asset-modal-kicker">生成</span>
+          </div>
+        </header>
+
+        <div className="asset-modal-body gen-body">
+          <p className="gen-subhead">
+            要件をもとにChatGPTへ情報を渡し生成プロンプトを作成 → 画像候補（5〜10枚）を出力。固まれば社内チェックへ反映します。
+          </p>
+
+          <div className="gen-tabs">
+            <button
+              type="button"
+              className={`gen-tab ${tab === "init" ? "on" : ""}`}
+              onClick={() => setTab("init")}
+            >
+              初期生成
+            </button>
+            <button
+              type="button"
+              className={`gen-tab ${tab === "fix" ? "on" : ""}`}
+              onClick={() => setTab("fix")}
+            >
+              修正生成
+            </button>
+          </div>
+
+          <div className="gen-cols">
+            <section className="modal-card gen-col">
+              <div className="gen-col-head">
+                <h3>生成プロンプト作成</h3>
+                <button
+                  className="button ghost sm"
+                  type="button"
+                  onClick={() => setShowDirection(true)}
+                >
+                  📋 ディレクションを確認
+                </button>
+              </div>
+
+              <span className="field-label">CHATGPTに送る参照画像（選択／アップロード）</span>
+              <UploadSlots />
+
+              <div className="gen-field-head">
+                <span className="field-label">CHATGPTへの指示（テキスト）</span>
+                <button
+                  className="button primary sm gen-chatgpt"
+                  type="button"
+                  onClick={createPrompt}
+                  disabled={generatingPrompt}
+                >
+                  {generatingPrompt ? (
+                    <>
+                      <span className="gen-spinner" aria-hidden />
+                      生成中…
+                    </>
+                  ) : (
+                    "ChatGPTで生成プロンプトを作成"
+                  )}
+                </button>
+              </div>
+              <textarea
+                className="modal-input gen-textarea"
+                rows={8}
+                defaultValue={instructionDefault}
+              />
+
+              <div className="gen-divider" />
+
+              <span className="field-label">生成プロンプト（この画像で使用／画像生成AIへ）</span>
+              <textarea
+                className="modal-input gen-textarea"
+                rows={8}
+                placeholder="「ChatGPTで生成プロンプトを作成」を押すと生成されます"
+                value={prompt}
+                onChange={(event) => setPrompt(event.target.value)}
+              />
+
+              <span className="field-label">生成に使う参照画像（選択／アップロード）</span>
+              <UploadSlots />
+
+              <span className="field-label">候補の作り方</span>
+              <div className="gen-variation">
+                <button
+                  type="button"
+                  className={variation === "same" ? "on" : ""}
+                  onClick={() => setVariation("same")}
+                >
+                  同じプロンプトで{outputCount}枚
+                </button>
+                <button
+                  type="button"
+                  className={variation === "minor" ? "on" : ""}
+                  onClick={() => setVariation("minor")}
+                >
+                  候補ごとにマイナーチェンジ
+                </button>
+              </div>
+
+              <div className="gen-col-foot">
+                <button
+                  className="button primary"
+                  type="button"
+                  onClick={generate}
+                  disabled={generatingImages}
+                >
+                  {generatingImages ? (
+                    <>
+                      <span className="gen-spinner" aria-hidden />
+                      生成中…
+                    </>
+                  ) : (
+                    "画像を生成"
+                  )}
+                </button>
+              </div>
+            </section>
+
+            <section className="modal-card gen-col">
+              <div className="gen-col-head">
+                <h3>生成候補</h3>
+                <div className="gen-output">
+                  出力
+                  <select
+                    value={outputCount}
+                    onChange={(event) => setOutputCount(Number(event.target.value))}
+                  >
+                    {[5, 6, 7, 8, 9, 10].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  枚
+                </div>
+              </div>
+
+              {generatingImages ? (
+                <div className="gen-empty gen-loading">
+                  <span className="gen-spinner gen-spinner--dark" aria-hidden />
+                  <p>画像を生成しています…</p>
+                </div>
+              ) : candidates.length === 0 ? (
+                <div className="gen-empty">
+                  <strong>未生成</strong>
+                  <p>まだ生成されていません。プロンプトを入力して「画像を生成」を押してください。</p>
+                  <p className="muted-inline">
+                    クリックで採用画像を選択。候補が微妙ならプロンプトを直して再度「生成」できます。
+                  </p>
+                </div>
+              ) : (
+                <div className="gen-candidates">
+                  {candidates.map((candidate) => (
+                    <button
+                      type="button"
+                      key={candidate}
+                      className={`gen-candidate ${selected === candidate ? "on" : ""}`}
+                      onClick={() => setSelected(candidate)}
+                    >
+                      <span className="gen-candidate-num">候補 {candidate + 1}</span>
+                      {selected === candidate && <span className="gen-candidate-badge">採用</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="gen-col-foot gen-reflect">
+                <label className="gen-dest">
+                  反映先
+                  <select value={destination} onChange={(event) => setDestination(event.target.value)}>
+                    {GEN_DESTINATIONS.map((dest) => (
+                      <option key={dest} value={dest}>
+                        {dest}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="button primary"
+                  type="button"
+                  disabled={selected === null}
+                  onClick={onClose}
+                >
+                  反映
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {showDirection && <DirectionSheet onClose={() => setShowDirection(false)} />}
+      </section>
     </div>
   );
 }
@@ -1397,6 +1898,47 @@ function AssetModal({
   const [modelCount, setModelCount] = useState(1);
   const [checkStep, setCheckStep] = useState(0);
   const [judge, setJudge] = useState<"要修正" | "OK" | null>(null);
+  const [fixComment, setFixComment] = useState("");
+  const [fixComments, setFixComments] = useState<{ role: string; body: string }[]>([]);
+  const [uploadsByStep, setUploadsByStep] = useState<Record<number, string[]>>({});
+  const [selectedByStep, setSelectedByStep] = useState<Record<number, number>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploads = uploadsByStep[checkStep] ?? [];
+  const selectedUpload = Math.min(selectedByStep[checkStep] ?? 0, Math.max(0, uploads.length - 1));
+  const selectUpload = (index: number) =>
+    setSelectedByStep((prev) => ({ ...prev, [checkStep]: index }));
+  const addUploads = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
+    setUploadsByStep((prev) => ({ ...prev, [checkStep]: [...(prev[checkStep] ?? []), ...urls] }));
+  };
+  const removeUpload = (index: number) => {
+    setUploadsByStep((prev) => ({
+      ...prev,
+      [checkStep]: (prev[checkStep] ?? []).filter((_, i) => i !== index)
+    }));
+    setSelectedByStep((prev) => {
+      const current = prev[checkStep] ?? 0;
+      const next = current > index ? current - 1 : current;
+      return { ...prev, [checkStep]: Math.max(0, next) };
+    });
+  };
+  const [orientOpen, setOrientOpen] = useState(true);
+  const [reqTabs, setReqTabs] = useState<ReqTab[]>(BASE_REQ_TABS);
+  const nextTabId = useRef(1);
+  const addReqTab = () => {
+    setReqTabs((tabs) => [
+      ...tabs,
+      { id: `custom-${nextTabId.current++}`, label: "新規項目", type: "single", removable: true }
+    ]);
+  };
+  const removeReqTab = (index: number) => {
+    setReqTabs((tabs) => tabs.filter((_, i) => i !== index));
+  };
+  const [refItems, setRefItems] = useState<number[]>([]);
+  const nextRefId = useRef(1);
+  const addRefItem = () => setRefItems((items) => [...items, nextRefId.current++]);
+  const removeRefItem = (id: number) => setRefItems((items) => items.filter((item) => item !== id));
 
   const [specSize, specFormat, specDpi] = asset.format.split(" / ");
   const phase = CHECK_PHASES[checkStep];
@@ -1412,7 +1954,7 @@ function AssetModal({
   return (
     <div className="modal-backdrop asset-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
-        className="asset-modal"
+        className={`asset-modal ${initialTab === "check" ? "asset-modal--check" : ""}`}
         role="dialog"
         aria-modal="true"
         onMouseDown={(event) => event.stopPropagation()}
@@ -1420,84 +1962,105 @@ function AssetModal({
         <header className="asset-modal-head">
           <div className="asset-modal-head-left">
             <span className="asset-modal-kicker">{initialTab === "req" ? "要件指定" : "チェック"}</span>
-            <span className="asset-modal-title">
-              #{number} {asset.title}
-            </span>
           </div>
-          <button className="button ghost sm" type="button" onClick={onClose}>
-            ✕ 閉じる
-          </button>
         </header>
 
         <div className="asset-modal-body">
           {initialTab === "req" ? (
             <div className="req-view">
-              <div className="stage-head">
-                <h2>
-                  <span className="stage-num">①</span> 要件指定
-                </h2>
-                <p>オリエンを見て要件を整理 → 要件指定書を作成。生成は別ツールで実施します。</p>
+              <div className="field req-title-field">
+                <span className="field-label">対象画像（タイトル）</span>
+                <input className="modal-input" defaultValue={asset.title} />
               </div>
 
               <div className="req-2pane">
-                {/* 左：オリエン（参照） */}
+                {/* オリエン（参照・折りたたみ） */}
                 <aside className="orient-pane">
-                  <div className="pane-head">
-                    <h3>オリエン</h3>
-                    <span className="tag-pink">依頼内容</span>
-                  </div>
-                  <p className="pane-note">クライアントからの依頼。ここを見て右側の要件指定書をまとめます。</p>
+                  <button
+                    type="button"
+                    className="orient-toggle"
+                    onClick={() => setOrientOpen((open) => !open)}
+                    aria-expanded={orientOpen}
+                  >
+                    <span className="pane-head">
+                      <span className="orient-title">オリエン</span>
+                      <span className="tag-pink">依頼内容</span>
+                      <span className="muted-inline">クリックで開閉</span>
+                    </span>
+                    <span className={`orient-caret ${orientOpen ? "open" : ""}`}>▾</span>
+                  </button>
 
-                  <div className="field">
-                    <span className="field-label">指定スペック</span>
-                    <div className="spec-chips">
-                      <div className="spec-chip">
-                        <span>出力サイズ</span>
-                        <b>{specSize}</b>
+                  {orientOpen && (
+                    <div className="orient-body">
+                      <div className="field">
+                        <span className="field-label">指定スペック</span>
+                        <div className="spec-chips">
+                          <div className="spec-chip">
+                            <span>出力サイズ</span>
+                            <b>{specSize}</b>
+                          </div>
+                          <div className="spec-chip">
+                            <span>形式</span>
+                            <b>{specFormat}</b>
+                          </div>
+                          <div className="spec-chip">
+                            <span>DPI</span>
+                            <b>{specDpi?.replace("dpi", "")}</b>
+                          </div>
+                          <span className="spec-note">※ スペックは「画像一覧」で設定</span>
+                        </div>
                       </div>
-                      <div className="spec-chip">
-                        <span>形式</span>
-                        <b>{specFormat}</b>
+
+                      <div className="field">
+                        <span className="field-label">概要コメント</span>
+                        <textarea
+                          className="modal-input orient-comment"
+                          rows={4}
+                          defaultValue="ECトップのメインKV。春の新作トップスを主役に、休日の朝の外出シーンを想起させる明るく軽やかなトーンで。全身が無理なく収まり、上下に余白を確保（バナー転用前提）。モデルは20代後半・ナチュラルメイク、屋外の並木道で自然光を希望。"
+                        />
                       </div>
-                      <div className="spec-chip">
-                        <span>DPI</span>
-                        <b>{specDpi?.replace("dpi", "")}</b>
+
+                      <div className="field">
+                        {refItems.map((id) => (
+                          <div className="ref-card" key={id}>
+                            <div className="ref-card-head">
+                              <span className="tag-purple">参考画像</span>
+                              <button
+                                type="button"
+                                className="ref-card-remove"
+                                onClick={() => removeRefItem(id)}
+                                aria-label="この参考画像を削除"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            <div className="ref-card-body">
+                              <UploadSlots />
+                              <textarea
+                                className="req-comment"
+                                rows={3}
+                                placeholder="この参考画像へのコメント"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="button ghost sm ref-add-btn"
+                          onClick={addRefItem}
+                        >
+                          ＋ 参考画像＋コメントを追加
+                        </button>
                       </div>
                     </div>
-                    <span className="spec-note">※ スペックは「画像一覧」で設定</span>
-                  </div>
-
-                  <div className="field">
-                    <span className="field-label">依頼概要</span>
-                    <p className="orient-text">{asset.concept}</p>
-                  </div>
-
-                  <div className="field">
-                    <span className="field-label">参考画像</span>
-                    {asset.references.length ? (
-                      <div className="orient-refs">
-                        {asset.references.map((ref) => (
-                          <span className="ref-chip" key={ref}>
-                            📎 {ref}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="muted-inline">参考画像はありません</p>
-                    )}
-                  </div>
+                  )}
                 </aside>
 
-                {/* 右：要件指定書（作成） */}
+                {/* 要件指定書（作成） */}
                 <div className="req-pane">
                   <div className="pane-head">
                     <h3>要件指定書</h3>
                     <span className="muted-inline">この内容をデザイナーへ渡します</span>
-                  </div>
-
-                  <div className="field">
-                    <span className="field-label">対象画像（タイトル）</span>
-                    <input className="modal-input" defaultValue={asset.title} />
                   </div>
 
                   <div className="req-items-head">
@@ -1523,108 +2086,53 @@ function AssetModal({
                           ))}
                         </div>
                       </div>
-                      <button className="button ghost sm" type="button">
+                      <button className="button ghost sm" type="button" onClick={addReqTab}>
                         ＋ 項目を追加
                       </button>
                     </div>
                   </div>
 
-                  <div className="req-item">
-                    <div className="req-item-label">全体イメージ</div>
-                    <div className="req-item-body">
-                      <div className="req-uploads">
-                        <div className="upload-slot">
-                          <button className="slot-x" type="button">
+                  {reqTabs.map((tabItem, index) => (
+                    <div
+                      key={tabItem.id}
+                      className={`req-item ${tabItem.type === "coordinate" ? "req-item-client" : ""}`}
+                    >
+                      <div className="req-item-label">
+                        <span className="req-item-title">{tabItem.label}</span>
+                        {tabItem.type === "coordinate" && (
+                          <>
+                            <span className="tag-pink">クライアント入力</span>
+                            <span className="muted-inline">正面のみ表示・クリックで裏/横/ディテール</span>
+                          </>
+                        )}
+                        {tabItem.removable && (
+                          <button
+                            type="button"
+                            className="req-item-remove"
+                            onClick={() => removeReqTab(index)}
+                            aria-label={`${tabItem.label}を削除`}
+                          >
                             ×
                           </button>
+                        )}
+                      </div>
+
+                      {tabItem.type === "overall" ? (
+                        <div className="req-item-body">
+                          <UploadSlots />
+                          <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
                         </div>
-                        <button className="slot-add" type="button">
-                          ＋
-                        </button>
-                      </div>
-                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
+                      ) : (
+                        <ReqModelRows count={modelCount} kind={tabItem.type} />
+                      )}
                     </div>
-                  </div>
+                  ))}
 
-                  <div className="req-item req-item-client">
-                    <div className="req-item-label">
-                      コーディネート <span className="tag-pink">クライアント入力</span>
-                      <span className="muted-inline">正面のみ表示・クリックで裏/横/ディテール</span>
-                    </div>
-                    <div className="req-item-body">
-                      <div className="req-uploads">
-                        <div className="upload-slot">
-                          <span className="slot-badge">1枚</span>
-                          <span className="slot-num">1</span>
-                        </div>
-                        <div className="upload-slot">
-                          <span className="slot-badge">1枚</span>
-                          <span className="slot-num">2</span>
-                        </div>
-                        <button className="slot-add" type="button">
-                          ＋
-                        </button>
-                      </div>
-                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
-                    </div>
-                  </div>
-
-                  <div className="req-item">
-                    <div className="req-item-label">モデル</div>
-                    <div className="req-item-body">
-                      <div className="req-uploads">
-                        <div className="model-pill">♀</div>
-                        <div className="model-pill">♀</div>
-                        <div className="model-pill">♂</div>
-                        <button className="slot-add-dashed" type="button">
-                          ＋ モデル追加
-                        </button>
-                      </div>
-                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
-                    </div>
-                  </div>
-
-                  <div className="req-item">
-                    <div className="req-item-label">スタイリング</div>
-                    <div className="req-item-body">
-                      <div className="req-uploads">
-                        <button className="slot-add" type="button">
-                          ＋
-                        </button>
-                      </div>
-                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
-                    </div>
-                  </div>
-
-                  <div className="req-item">
-                    <div className="req-item-label">ヘアメイク</div>
-                    <div className="req-item-body">
-                      <div className="req-uploads">
-                        <button className="slot-add" type="button">
-                          ＋
-                        </button>
-                      </div>
-                      <textarea className="req-comment" rows={3} placeholder="この画像へのコメント" />
-                    </div>
-                  </div>
-
-                  <div className="modal-foot">
-                    <button className="button primary" type="button">
-                      要件を確定して通知（デザイナーへ）
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="check-view">
-              <div className="stage-head">
-                <h2>
-                  <span className="stage-num">②</span> チェック
-                </h2>
-                <p>生成（大枠の方向性確認）とレタッチ後（最終チェック）を明確に分け、クライアントOKで納品。</p>
-              </div>
-
               <div className="check-steps">
                 {CHECK_PHASES.map((item, index) => (
                   <button
@@ -1644,77 +2152,226 @@ function AssetModal({
                 ))}
               </div>
 
-              <div className="check-phase-bar">
-                <strong>{phase.title}</strong>
-                <span>アップロード → レビュー（OK/要修正）</span>
-              </div>
-
               <div className="check-cols">
                 <section className="modal-card check-col">
-                  <span className="field-label">確認対象（{phase.target}）</span>
-                  <span className="tag-pink solid">未アップロード</span>
-                  <div className="check-drop" />
-                  <button className="button primary" type="button">
-                    {phase.uploadCta}
-                  </button>
-                  <p className="muted-inline">またはプレビューにドラッグ＆ドロップ</p>
-                  <p className="check-note">
-                    候補を複数枚アップロードできます。初回は「初稿」、要修正後は「再修正」として記録。
-                  </p>
-                  <div className="check-notify">
-                    <button className="button ghost sm" type="button">
-                      {phase.notify}
-                    </button>
-                    <span className="muted-inline">アップロード・伝達事項の記載後に通知</span>
-                  </div>
+                  <span className="field-label">{phase.targetLabel}</span>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    onChange={(event) => {
+                      addUploads(event.target.files);
+                      event.target.value = "";
+                    }}
+                  />
+
+                  {uploads.length === 0 ? (
+                    <div
+                      className="upload-dropzone"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        addUploads(event.dataTransfer.files);
+                      }}
+                    >
+                      <span className="upload-icon" aria-hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path
+                            d="M12 16V4m0 0L7 9m5-5 5 5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <p className="upload-title">{phase.uploadCta}</p>
+                      <p className="upload-hint">
+                        ここにドラッグ＆ドロップ、またはクリックして選択（PNG / JPG・複数可）
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      className="upload-gallery"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        addUploads(event.dataTransfer.files);
+                      }}
+                    >
+                      <div className="upload-main">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={uploads[selectedUpload]}
+                          alt={`選択中の画像 ${selectedUpload + 1}`}
+                        />
+                      </div>
+                      <div className="upload-thumbs">
+                        {uploads.map((src, index) => (
+                          <button
+                            type="button"
+                            className={`upload-thumb ${index === selectedUpload ? "on" : ""}`}
+                            key={src}
+                            onClick={() => selectUpload(index)}
+                            aria-label={`画像${index + 1}を選択`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={`アップロード画像 ${index + 1}`} />
+                            <span
+                              className="upload-thumb-x"
+                              role="button"
+                              aria-label={`画像${index + 1}を削除`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeUpload(index);
+                              }}
+                            >
+                              ×
+                            </span>
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="upload-thumb-add"
+                          onClick={() => fileInputRef.current?.click()}
+                          aria-label="画像を追加"
+                        >
+                          ＋
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </section>
 
                 <section className="modal-card check-col">
-                  <span className="field-label">{phase.memoLabel}</span>
-                  <textarea className="modal-input" rows={4} placeholder={phase.memoPlaceholder} />
-                  <span className="field-label">{phase.judgeLabel}</span>
-                  <div className="judge-row">
-                    <div className="judge-seg">
-                      <button
-                        type="button"
-                        className={judge === "要修正" ? "on" : ""}
-                        onClick={() => setJudge("要修正")}
-                      >
-                        要修正
-                      </button>
-                      <button
-                        type="button"
-                        className={judge === "OK" ? "on" : ""}
-                        onClick={() => setJudge("OK")}
-                      >
-                        OK
-                      </button>
+                  {phase.points.length > 0 && (
+                    <div className="check-points">
+                      <span className="field-label">確認ポイント</span>
+                      <ul>
+                        {phase.points.map((point) => (
+                          <li key={point}>{point}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <span className="judge-status">{judge ?? "未選択"}</span>
-                  </div>
-                  <div className="check-col-foot">
-                    {checkStep > 0 && (
-                      <button
-                        className="button ghost"
-                        type="button"
-                        onClick={() => setCheckStep((step) => step - 1)}
-                      >
-                        ← 前の段階
+                  )}
+                  <div className="check-group">
+                    <span className="field-label">{phase.memoLabel}</span>
+                    <textarea className="modal-input" rows={4} placeholder={phase.memoPlaceholder} />
+                    <div className="check-notify">
+                      <button className="button ghost sm" type="button">
+                        {phase.notify}
                       </button>
+                      <span className="muted-inline">アップロード・伝達事項の記載後に通知</span>
+                    </div>
+                  </div>
+
+                  <div className="check-group">
+                    <span className="field-label">{phase.judgeLabel}</span>
+                    <div className="judge-row">
+                      <div className="judge-seg">
+                        <button
+                          type="button"
+                          className={judge === "要修正" ? "on" : ""}
+                          onClick={() => setJudge("要修正")}
+                        >
+                          要修正
+                        </button>
+                        <button
+                          type="button"
+                          className={judge === "OK" ? "on" : ""}
+                          onClick={() => setJudge("OK")}
+                        >
+                          OK
+                        </button>
+                      </div>
+                      <span className="judge-status">{judge ?? "未選択"}</span>
+                    </div>
+
+                    {judge === "要修正" && (
+                      <div className="fix-request">
+                        {fixComments.map((comment, index) => (
+                          <div className="fix-comment" key={index}>
+                            <span className="fix-comment-role">{comment.role}</span>
+                            <span className="fix-comment-body">{comment.body}</span>
+                          </div>
+                        ))}
+                        <textarea
+                          className="modal-input"
+                          rows={4}
+                          placeholder="修正してほしい点を記入"
+                          value={fixComment}
+                          onChange={(event) => setFixComment(event.target.value)}
+                        />
+                        <div className="fix-actions">
+                          <button
+                            className="button ghost sm"
+                            type="button"
+                            onClick={() => {
+                              const body = fixComment.trim();
+                              if (!body) return;
+                              setFixComments((prev) => [
+                                ...prev,
+                                { role: phase.judgeLabel.replace("判定", ""), body }
+                              ]);
+                              setFixComment("");
+                            }}
+                          >
+                            送信
+                          </button>
+                        </div>
+                        <button className="button fix-reupload" type="button">
+                          デザイナー：再修正版を再アップロード
+                        </button>
+                      </div>
                     )}
-                    <button
-                      className="button primary"
-                      type="button"
-                      onClick={() => setCheckStep((step) => Math.min(step + 1, CHECK_PHASES.length - 1))}
-                    >
-                      {phase.cta}
-                    </button>
                   </div>
                 </section>
               </div>
             </div>
           )}
         </div>
+
+        <footer className="asset-modal-foot">
+          {initialTab === "req" ? (
+            <>
+              <button className="button ghost" type="button" onClick={onClose}>
+                閉じる
+              </button>
+              <button className="button primary" type="button">
+                要件を確定して通知（デザイナーへ）
+              </button>
+            </>
+          ) : (
+            <>
+              {phase.ctaNote && <span className="muted-inline">{phase.ctaNote}</span>}
+              <button className="button ghost" type="button" onClick={onClose}>
+                閉じる
+              </button>
+              <button
+                className="button primary"
+                type="button"
+                onClick={() => setCheckStep((step) => Math.min(step + 1, CHECK_PHASES.length - 1))}
+              >
+                {phase.deliver ? phase.cta : "保存して次へ"}
+              </button>
+            </>
+          )}
+        </footer>
       </section>
     </div>
   );
@@ -1762,10 +2419,41 @@ function Overview({
   onPreview
 }: {
   assets: Asset[];
-  onOpenAsset: (assetId: string, tab: "req" | "check") => void;
+  onOpenAsset: (assetId: string, tab: "req" | "gen" | "check") => void;
   onPreview: (assetId: string) => void;
 }) {
   const [view, setView] = useState<"list" | "gallery">("list");
+  const [bulkSpec, setBulkSpec] = useState({
+    size: SPEC_SIZES[0],
+    format: SPEC_FORMATS[0],
+    dpi: SPEC_DPIS[0]
+  });
+  const [specOverrides, setSpecOverrides] = useState<
+    Record<string, { size: string; format: string; dpi: string }>
+  >({});
+
+  function specFor(asset: Asset) {
+    if (specOverrides[asset.id]) return specOverrides[asset.id];
+    const [size, format, dpi] = asset.format.split(" / ");
+    return { size, format, dpi: dpi?.replace("dpi", "") ?? "" };
+  }
+
+  function updateSpec(asset: Asset, patch: Partial<{ size: string; format: string; dpi: string }>) {
+    setSpecOverrides((prev) => ({
+      ...prev,
+      [asset.id]: { ...specFor(asset), ...patch }
+    }));
+  }
+
+  function applyBulkSpec() {
+    setSpecOverrides((prev) => {
+      const next = { ...prev };
+      assets.forEach((asset) => {
+        next[asset.id] = { ...bulkSpec };
+      });
+      return next;
+    });
+  }
 
   return (
     <div className="overview-layout">
@@ -1785,9 +2473,52 @@ function Overview({
             </button>
           </div>
           <div className="section-title-actions">
-            <button className="button ghost sm">⬇ 一括ダウンロード</button>
-            <button className="button primary sm">＋ 画像を追加</button>
+            {view === "gallery" && <button className="button ghost sm">⬇ 一括ダウンロード</button>}
           </div>
+        </div>
+
+        <div className="table-top-bar">
+          {view === "list" && (
+          <div className="bulk-spec-bar">
+            <span className="bulk-spec-label">指定スペック一括：</span>
+            <select
+              value={bulkSpec.size}
+              onChange={(event) => setBulkSpec((spec) => ({ ...spec, size: event.target.value }))}
+            >
+              {SPEC_SIZES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <select
+              value={bulkSpec.format}
+              onChange={(event) => setBulkSpec((spec) => ({ ...spec, format: event.target.value }))}
+            >
+              {SPEC_FORMATS.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <select
+              value={bulkSpec.dpi}
+              onChange={(event) => setBulkSpec((spec) => ({ ...spec, dpi: event.target.value }))}
+            >
+              {SPEC_DPIS.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <button className="button ghost sm bulk-spec-apply" type="button" onClick={applyBulkSpec}>
+              全画像に適用
+            </button>
+          </div>
+          )}
+          <button className="button primary sm table-add-btn" type="button">
+            ＋ 追加
+          </button>
         </div>
 
         {view === "list" && (
@@ -1813,7 +2544,7 @@ function Overview({
                 <th>担当（生成/レタッチ）</th>
                 <th>指定スペック</th>
                 <th>ステータス</th>
-                <th>進行（要件/チェック）</th>
+                <th>進行（要件/生成/チェック）</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -1856,21 +2587,30 @@ function Overview({
                   </td>
                   <td>
                     <div className="spec-selects">
-                      <select defaultValue={asset.format.split(" / ")[0]}>
+                      <select
+                        value={specFor(asset).size}
+                        onChange={(event) => updateSpec(asset, { size: event.target.value })}
+                      >
                         {SPEC_SIZES.map((value) => (
                           <option key={value} value={value}>
                             {value}
                           </option>
                         ))}
                       </select>
-                      <select defaultValue={asset.format.split(" / ")[1]}>
+                      <select
+                        value={specFor(asset).format}
+                        onChange={(event) => updateSpec(asset, { format: event.target.value })}
+                      >
                         {SPEC_FORMATS.map((value) => (
                           <option key={value} value={value}>
                             {value}
                           </option>
                         ))}
                       </select>
-                      <select defaultValue={asset.format.split(" / ")[2]?.replace("dpi", "")}>
+                      <select
+                        value={specFor(asset).dpi}
+                        onChange={(event) => updateSpec(asset, { dpi: event.target.value })}
+                      >
                         {SPEC_DPIS.map((value) => (
                           <option key={value} value={value}>
                             {value}
@@ -1880,7 +2620,9 @@ function Overview({
                     </div>
                   </td>
                   <td>
-                    <Badge tone={statusTone[asset.status]}>{asset.status}</Badge>
+                    <Badge tone={CHECK_STATUS_LABEL[asset.status].tone}>
+                      {CHECK_STATUS_LABEL[asset.status].label}
+                    </Badge>
                   </td>
                   <td>
                     <div className="progress-actions">
@@ -1894,6 +2636,13 @@ function Overview({
                       <button
                         className="button ghost sm"
                         type="button"
+                        onClick={() => onOpenAsset(asset.id, "gen")}
+                      >
+                        生成
+                      </button>
+                      <button
+                        className="button ghost sm"
+                        type="button"
                         onClick={() => onOpenAsset(asset.id, "check")}
                       >
                         チェック
@@ -1902,10 +2651,20 @@ function Overview({
                   </td>
                   <td>
                     <div className="row-ops">
-                      <button type="button" aria-label="複製">
+                      <button
+                        type="button"
+                        className="has-tooltip"
+                        data-tooltip="この行を複製して追加"
+                        aria-label="この行を複製して追加"
+                      >
                         ⧉
                       </button>
-                      <button type="button" aria-label="削除">
+                      <button
+                        type="button"
+                        className="has-tooltip"
+                        data-tooltip="この画像を削除"
+                        aria-label="この画像を削除"
+                      >
                         🗑
                       </button>
                     </div>
