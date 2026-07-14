@@ -1470,7 +1470,7 @@ function ImageZoom({ src, onClose }: { src: string; onClose: () => void }) {
   );
 }
 
-function UploadSlots() {
+function UploadSlots({ cta }: { cta?: string } = {}) {
   const [images, setImages] = useState<string[]>([]);
   const [zoom, setZoom] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1482,6 +1482,7 @@ function UploadSlots() {
   const remove = (index: number) => setImages((prev) => prev.filter((_, i) => i !== index));
 
   return (
+    <>
     <div className="req-uploads">
       <input
         ref={inputRef}
@@ -1523,6 +1524,16 @@ function UploadSlots() {
       </button>
       {zoom && <ImageZoom src={zoom} onClose={() => setZoom(null)} />}
     </div>
+    {cta && (
+      <button
+        type="button"
+        className="upload-cta"
+        onClick={() => inputRef.current?.click()}
+      >
+        ＋ {cta}
+      </button>
+    )}
+    </>
   );
 }
 
@@ -1562,6 +1573,13 @@ function ReqModelRows({
 }
 
 const GEN_DESTINATIONS = ["社内/生成", "クライアント/生成", "社内/レタッチ後", "クライアント/レタッチ後"];
+
+const FIX_STAGES = [
+  { value: "社内 / 生成", reviewer: "社内", comment: "背景はもっとシンプルに" },
+  { value: "クライアント / 生成", reviewer: "クライアント", comment: "モデルの表情をやわらかく" },
+  { value: "社内 / レタッチ後", reviewer: "社内", comment: "肌のトーンを自然に整える" },
+  { value: "クライアント / レタッチ後", reviewer: "クライアント", comment: "全体を少し明るく" }
+];
 
 const DIRECTION_SECTIONS: { label: string; images: number; comment: string }[] = [
   {
@@ -1639,6 +1657,20 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
   const [selected, setSelected] = useState<number | null>(null);
   const [destination, setDestination] = useState(GEN_DESTINATIONS[0]);
   const [prompt, setPrompt] = useState("");
+  const [showToast, setShowToast] = useState(false);
+  const [fixStage, setFixStage] = useState(FIX_STAGES[0].value);
+  const [fixPrompt, setFixPrompt] = useState("");
+  const [generatingFixPrompt, setGeneratingFixPrompt] = useState(false);
+
+  const currentFixStage = FIX_STAGES.find((stage) => stage.value === fixStage) ?? FIX_STAGES[0];
+  const fixStageTag = currentFixStage.value.replace(/\s/g, "");
+  const fixInstructionDefault = [
+    "# 元の生成プロンプト",
+    prompt.trim() ? prompt.trim() : "（未設定）",
+    "",
+    `# チェックコメント（${fixStageTag}）`,
+    currentFixStage.comment
+  ].join("\n");
 
   const instructionDefault = [
     "# ディレクション内容",
@@ -1667,6 +1699,24 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
       setCandidates(Array.from({ length: outputCount }, (_, index) => index));
       setGeneratingImages(false);
     }, 1400);
+  };
+
+  const reflect = () => {
+    setShowToast(true);
+    window.setTimeout(() => setShowToast(false), 2400);
+  };
+
+  const createFixPrompt = () => {
+    setGeneratingFixPrompt(true);
+    window.setTimeout(() => {
+      const base = prompt.trim()
+        ? prompt.trim()
+        : "A woman in her late 20s wearing a light spring top and beige bottoms, natural makeup, standing on a tree-lined street in soft morning light. Full-body composition with margin at top and bottom for banner use. Bright, airy and gentle tone, photorealistic, high resolution.";
+      setFixPrompt(
+        `${base}\n\n# 修正指示（${fixStageTag}）\n${currentFixStage.comment}`
+      );
+      setGeneratingFixPrompt(false);
+    }, 1200);
   };
 
   const createPrompt = () => {
@@ -1716,6 +1766,97 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
           </div>
 
           <div className="gen-cols">
+            {tab === "fix" ? (
+            <section className="modal-card gen-col">
+              <div className="gen-col-head">
+                <h3>修正生成</h3>
+                <span className="gen-subhead">チェックのコメントを反映</span>
+              </div>
+
+              <div>
+                <span className="field-label">対象のチェック段階</span>
+                <select
+                  className="modal-input"
+                  value={fixStage}
+                  onChange={(event) => setFixStage(event.target.value)}
+                >
+                  {FIX_STAGES.map((stage) => (
+                    <option key={stage.value} value={stage.value}>
+                      {stage.value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <span className="field-label">この段階のコメント</span>
+                <div className="gen-comment-box">
+                  {currentFixStage.reviewer} {currentFixStage.comment}
+                </div>
+              </div>
+
+              <div>
+                <div className="gen-field-head">
+                  <span className="field-label">CHATGPTへの指示（修正）</span>
+                  <button
+                    className="button primary sm gen-chatgpt"
+                    type="button"
+                    onClick={createFixPrompt}
+                    disabled={generatingFixPrompt}
+                  >
+                    {generatingFixPrompt ? (
+                      <>
+                        <span className="gen-spinner" aria-hidden />
+                        生成中…
+                      </>
+                    ) : (
+                      "ChatGPTで修正プロンプトを作成"
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  className="modal-input gen-textarea"
+                  rows={6}
+                  key={fixStage}
+                  defaultValue={fixInstructionDefault}
+                />
+              </div>
+
+              <div>
+                <span className="field-label">生成に使う参照画像（選択／アップロード）</span>
+                <UploadSlots cta="画像をアップロード" />
+              </div>
+
+              <div>
+                <span className="field-label">修正プロンプト（元の使ったプロンプト＋コメント）</span>
+                <textarea
+                  className="modal-input gen-textarea"
+                  rows={6}
+                  placeholder="元プロンプトを表示。「コメントから作成」でコメントを追記"
+                  value={fixPrompt}
+                  onChange={(event) => setFixPrompt(event.target.value)}
+                />
+              </div>
+
+              <div className="gen-col-foot">
+                <button
+                  className="button primary"
+                  type="button"
+                  onClick={generate}
+                  disabled={generatingImages}
+                >
+                  {generatingImages ? (
+                    <>
+                      <span className="gen-spinner" aria-hidden />
+                      生成中…
+                    </>
+                  ) : (
+                    "この修正で再生成"
+                  )}
+                </button>
+              </div>
+            </section>
+            ) : (
             <section className="modal-card gen-col">
               <div className="gen-col-head">
                 <h3>生成プロンプト作成</h3>
@@ -1805,6 +1946,7 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
                 </button>
               </div>
             </section>
+            )}
 
             <section className="modal-card gen-col">
               <div className="gen-col-head">
@@ -1868,8 +2010,8 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
                 <button
                   className="button primary"
                   type="button"
-                  disabled={selected === null}
-                  onClick={onClose}
+                  disabled={candidates.length === 0}
+                  onClick={reflect}
                 >
                   反映
                 </button>
@@ -1878,7 +2020,18 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
           </div>
         </div>
 
+        <footer className="asset-modal-foot">
+          <button className="button ghost" type="button" onClick={onClose}>
+            閉じる
+          </button>
+        </footer>
+
         {showDirection && <DirectionSheet onClose={() => setShowDirection(false)} />}
+        {showToast && (
+          <div className="gen-toast" role="status" aria-live="polite">
+            ✓ 反映しました
+          </div>
+        )}
       </section>
     </div>
   );

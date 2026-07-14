@@ -1462,6 +1462,7 @@ h1.project-title {
 
 .asset-modal--gen {
   height: min(92vh, 900px);
+  position: relative;
 }
 
 /* 生成モーダル */
@@ -1534,6 +1535,7 @@ h1.project-title {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
 .gen-loading {
@@ -1739,6 +1741,64 @@ h1.project-title {
   font-family: inherit;
   font-size: 13px;
   background: #fff;
+}
+
+.gen-comment-box {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--lav-soft);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.upload-cta {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.upload-cta:hover {
+  background: var(--lav-soft);
+}
+
+.gen-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(24, 24, 27, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: gen-toast-in 0.2s ease-out;
+  pointer-events: none;
+}
+
+@keyframes gen-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* ディレクション（要件）内容ビュー */
