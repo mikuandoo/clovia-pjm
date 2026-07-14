@@ -1653,6 +1653,7 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
   const [tab, setTab] = useState<"init" | "fix">("init");
   const [outputCount, setOutputCount] = useState(5);
   const [variation, setVariation] = useState<"same" | "minor">("same");
+  const [tuning, setTuning] = useState("");
   const [candidates, setCandidates] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [destination, setDestination] = useState(GEN_DESTINATIONS[0]);
@@ -1927,6 +1928,15 @@ function GenerateModal({ asset, onClose }: { asset: Asset; onClose: () => void }
                   候補ごとにマイナーチェンジ
                 </button>
               </div>
+              {variation === "minor" && (
+                <input
+                  className="modal-input"
+                  type="text"
+                  value={tuning}
+                  onChange={(event) => setTuning(event.target.value)}
+                  placeholder="チューニング観点（例：ポージングの幅、寄り/引き）"
+                />
+              )}
 
               <div className="gen-col-foot">
                 <button
